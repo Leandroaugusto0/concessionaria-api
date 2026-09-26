@@ -1,0 +1,31 @@
+{
+  "name": "concessionaria-api",
+  "version": "1.0.0",
+  "description": "API REST para gerenciamento de uma concessionária de veículos - APS da disciplina de Back-End Development",
+  "type": "module",
+  "main": "src/server.ts",
+  "scripts": {
+    "dev": "node --watch --env-file=.env --import=tsx/esm src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "back-end",
+    "ts",
+    "api",
+    "concessionaria",
+    "node"
+  ],
+  "license": "ISC",
+  "author": "Leandro Augusto Alencar dos Santos, João Marcos da Guarda de Castro",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
