@@ -1,4 +1,5 @@
 import express from "express";
+import marcaRoutes from "./routes/marcaRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -12,5 +13,10 @@ app.get("/", (req, res) => {
         version: "1.0.0"
     });
 });
+
+// =================
+// Marcas
+// =================
+app.use("/marcas", marcaRoutes);
 
 export default app;
