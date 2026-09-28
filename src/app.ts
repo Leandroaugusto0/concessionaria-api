@@ -1,5 +1,6 @@
 import express from "express";
 import marcaRoutes from "./routes/marcaRoutes.js";
+import veiculoRoutes from "./routes/veiculoRoutes.js";
 
 const app = express();
 app.use(express.json());
@@ -18,5 +19,10 @@ app.get("/", (req, res) => {
 // Marcas
 // =================
 app.use("/marcas", marcaRoutes);
+
+// =================
+// Veiculos
+// =================
+app.use("/veiculos", veiculoRoutes);
 
 export default app;
