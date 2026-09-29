@@ -41,6 +41,20 @@ async function create(req: Request, res: Response) {
         return;
     }
 
+    if (typeof ano !== "number" || ano < 1950 || ano > 2100) {
+        res.status(400).json({
+            message: "Ano invalido."
+        });
+        return;
+    }
+
+    if (typeof preco !== "number" || preco <= 0) {
+        res.status(400).json({
+            message: "Preco tem que ser maior que zero."
+        });
+        return;
+    }
+
     try {
         const veiculo = await Veiculo.create(req.body);
 
@@ -61,6 +75,13 @@ async function update(req: Request<{ id: string }>, res: Response) {
     if (!marca_id || !modelo || !ano || !preco) {
         res.status(400).json({
             message: "marca_id, modelo, ano e preco sao obrigatorios."
+        });
+        return;
+    }
+
+    if (typeof preco !== "number" || preco <= 0) {
+        res.status(400).json({
+            message: "Preco tem que ser maior que zero."
         });
         return;
     }

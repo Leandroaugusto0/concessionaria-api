@@ -34,7 +34,7 @@ async function getById(req: Request<{ id: string }>, res: Response) {
 async function create(req: Request, res: Response) {
     const { nome } = req.body;
 
-    if (!nome) {
+    if (!nome || typeof nome !== "string" || !nome.trim()) {
         res.status(400).json({
             message: "O nome da marca e obrigatorio."
         });
@@ -58,7 +58,7 @@ async function update(req: Request<{ id: string }>, res: Response) {
     const { id } = req.params;
     const { nome } = req.body;
 
-    if (!nome) {
+    if (!nome || typeof nome !== "string" || !nome.trim()) {
         res.status(400).json({
             message: "O nome da marca e obrigatorio."
         });
