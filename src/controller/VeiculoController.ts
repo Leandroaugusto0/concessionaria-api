@@ -2,8 +2,15 @@ import type { Request, Response } from "express";
 import Veiculo from "../models/Veiculo.js";
 
 async function getAll(req: Request, res: Response) {
+    const { marca_id, disponivel, busca, ordenar } = req.query;
+
     try {
-        const veiculos = await Veiculo.findAll();
+        const veiculos = await Veiculo.findAll({
+            marca_id: marca_id as string | undefined,
+            disponivel: disponivel === undefined ? undefined : disponivel === "true",
+            busca: busca as string | undefined,
+            ordenar: ordenar as string | undefined,
+        });
 
         res.status(200).json(veiculos);
     } catch (error) {
