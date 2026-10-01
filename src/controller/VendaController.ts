@@ -1,104 +1,281 @@
 import type { Request, Response } from "express";
 import Venda from "../models/Venda.js";
+import Veiculo from "../models/Veiculo.js";
+import Cliente from "../models/Cliente.js";
+import Validacao from "../utils/validacao.js";
 
-async function getAll(req: Request, res: Response) {
-    try {
-        const vendas = await Venda.findAll();
+const STATUS_VALIDOS = ["pendente", "concluida", "cancelada"];
 
-        res.status(200).json(vendas);
-    } catch (error) {
-        console.error("Erro ao buscar vendas: ", error);
+// Valida os campos que podem ser enviados tanto no create quanto no update.
+// Retorna a mensagem de erro, ou null se estiver tudo certo.
+function validarDadosVenda(body: any): string | null {
+  const { vendedor, preco_venda, forma_pagamento, status } = body;
 
-        res.status(500).json({
-            message: "Erro ao buscar vendas.",
-        });
-    }
+  if (vendedor === undefined || preco_venda === undefined) {
+    return "vendedor e preco_venda sao obrigatorios.";
+  }
+
+  if (typeof vendedor !== "string" || !vendedor.trim()) {
+    return "O vendedor e obrigatorio.";
+  }
+
+  if (vendedor.length > 150) {
+    return "O vendedor deve ter no maximo 150 caracteres.";
+  }
+
+  if (typeof preco_venda !== "number" || preco_venda <= 0) {
+    return "preco_venda tem que ser maior que zero.";
+  }
+
+  if (!Validacao.isTextoOpcional(forma_pagamento)) {
+    return "forma_pagamento deve ser um texto.";
+  }
+
+  if (forma_pagamento && forma_pagamento.length > 30) {
+    return "forma_pagamento deve ter no maximo 30 caracteres.";
+  }
+
+  if (
+    status !== undefined &&
+    !STATUS_VALIDOS.includes(status)
+  ) {
+    return `Status invalido. Use: ${STATUS_VALIDOS.join(", ")}.`;
+  }
+
+  return null;
 }
 
-async function getById(req: Request<{ id: string }>, res: Response) {
-    const { id } = req.params;
+async function getAll(req: Request, res: Response) {
+  try {
+    const vendas = await Venda.findAll();
 
-    try {
-        const venda = await Venda.findById(id);
+    res.status(200).json(vendas);
+  } catch (error) {
+    console.error("Erro ao buscar vendas: ", error);
 
-        res.status(200).json(venda);
-    } catch (error) {
-        console.error("Erro ao buscar venda: ", error);
+    res.status(500).json({
+      message: "Erro ao buscar vendas.",
+    });
+  }
+}
 
-        res.status(404).json({
-            message: "Venda nao encontrada.",
-        });
+async function getById(
+  req: Request<{ id: string }>,
+  res: Response
+) {
+  const { id } = req.params;
+
+  if (!Validacao.isUuid(id)) {
+    res.status(400).json({
+      message: "Id invalido.",
+    });
+
+    return;
+  }
+
+  try {
+    const venda = await Venda.findById(id);
+
+    if (!venda) {
+      res.status(404).json({
+        message: "Venda nao encontrada.",
+      });
+
+      return;
     }
+
+    res.status(200).json(venda);
+  } catch (error) {
+    console.error("Erro ao buscar venda: ", error);
+
+    res.status(500).json({
+      message: "Erro ao buscar venda.",
+    });
+  }
 }
 
 async function create(req: Request, res: Response) {
-    const { veiculo_id, cliente_id, vendedor, preco_venda } = req.body;
+  const {
+    veiculo_id,
+    cliente_id,
+    vendedor,
+    preco_venda,
+    forma_pagamento,
+    status,
+  } = req.body;
 
-    if (!veiculo_id || !cliente_id || !vendedor || !preco_venda) {
-        res.status(400).json({
-            message: "veiculo_id, cliente_id, vendedor e preco_venda sao obrigatorios."
-        });
-        return;
+  if (!veiculo_id || !cliente_id) {
+    res.status(400).json({
+      message: "veiculo_id e cliente_id sao obrigatorios.",
+    });
+
+    return;
+  }
+
+  if (
+    !Validacao.isUuid(veiculo_id) ||
+    !Validacao.isUuid(cliente_id)
+  ) {
+    res.status(400).json({
+      message: "veiculo_id ou cliente_id invalido.",
+    });
+
+    return;
+  }
+
+  const erro = validarDadosVenda(req.body);
+
+  if (erro) {
+    res.status(400).json({
+      message: erro,
+    });
+
+    return;
+  }
+
+  try {
+    const veiculo = await Veiculo.findById(veiculo_id);
+
+    if (!veiculo) {
+      res.status(400).json({
+        message: "O veiculo informado nao existe.",
+      });
+
+      return;
     }
 
-    if (typeof preco_venda !== "number" || preco_venda <= 0) {
-        res.status(400).json({
-            message: "preco_venda tem que ser maior que zero."
-        });
-        return;
+    const cliente = await Cliente.findById(cliente_id);
+
+    if (!cliente) {
+      res.status(400).json({
+        message: "O cliente informado nao existe.",
+      });
+
+      return;
     }
 
-    try {
-        const venda = await Venda.create(req.body);
+    const venda = await Venda.create({
+      veiculo_id,
+      cliente_id,
+      vendedor: vendedor.trim(),
+      preco_venda,
+      forma_pagamento,
+      status,
+    });
 
-        res.status(201).json(venda);
-    } catch (error) {
-        console.error("Erro ao criar venda: ", error);
+    res.status(201).json(venda);
+  } catch (error) {
+    console.error("Erro ao criar venda: ", error);
 
-        res.status(500).json({
-            message: "Erro ao criar venda.",
-        });
-    }
+    res.status(500).json({
+      message: "Erro ao criar venda.",
+    });
+  }
 }
 
-async function update(req: Request<{ id: string }>, res: Response) {
-    const { id } = req.params;
+async function update(
+  req: Request<{ id: string }>,
+  res: Response
+) {
+  const { id } = req.params;
 
-    try {
-        const venda = await Venda.update(id, req.body);
+  if (!Validacao.isUuid(id)) {
+    res.status(400).json({
+      message: "Id invalido.",
+    });
 
-        res.status(200).json(venda);
-    } catch (error) {
-        console.error("Erro ao atualizar venda: ", error);
+    return;
+  }
 
-        res.status(500).json({
-            message: "Erro ao atualizar venda.",
-        });
+  const erro = validarDadosVenda(req.body);
+
+  if (erro) {
+    res.status(400).json({
+      message: erro,
+    });
+
+    return;
+  }
+
+  // veiculo_id e cliente_id nao podem ser alterados depois da venda registrada
+  const {
+    vendedor,
+    preco_venda,
+    forma_pagamento,
+    status,
+  } = req.body;
+
+  try {
+    const existe = await Venda.findById(id);
+
+    if (!existe) {
+      res.status(404).json({
+        message: "Venda nao encontrada.",
+      });
+
+      return;
     }
+
+    const venda = await Venda.update(id, {
+      vendedor: vendedor.trim(),
+      preco_venda,
+      forma_pagamento,
+      status,
+    });
+
+    res.status(200).json(venda);
+  } catch (error) {
+    console.error("Erro ao atualizar venda: ", error);
+
+    res.status(500).json({
+      message: "Erro ao atualizar venda.",
+    });
+  }
 }
 
-async function remove(req: Request<{ id: string }>, res: Response) {
-    const { id } = req.params;
+async function remove(
+  req: Request<{ id: string }>,
+  res: Response
+) {
+  const { id } = req.params;
 
-    try {
-        await Venda.remove(id);
+  if (!Validacao.isUuid(id)) {
+    res.status(400).json({
+      message: "Id invalido.",
+    });
 
-        res.status(200).json({
-            message: "Venda removida com sucesso.",
-        });
-    } catch (error) {
-        console.error("Erro ao remover venda: ", error);
+    return;
+  }
 
-        res.status(500).json({
-            message: "Erro ao remover venda.",
-        });
+  try {
+    const existe = await Venda.findById(id);
+
+    if (!existe) {
+      res.status(404).json({
+        message: "Venda nao encontrada.",
+      });
+
+      return;
     }
+
+    await Venda.remove(id);
+
+    res.status(200).json({
+      message: "Venda removida com sucesso.",
+    });
+  } catch (error) {
+    console.error("Erro ao remover venda: ", error);
+
+    res.status(500).json({
+      message: "Erro ao remover venda.",
+    });
+  }
 }
 
 export default {
-    getAll,
-    getById,
-    create,
-    update,
-    remove
-}
+  getAll,
+  getById,
+  create,
+  update,
+  remove,
+};
