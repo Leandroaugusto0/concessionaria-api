@@ -1,88 +1,186 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <title>Concessionaria</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Concessionária</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <h1>Concessionaria</h1>
+    <header class="topo">
+        <h1>Concessionária</h1>
+        <p class="status" id="status-api" role="status" data-estado="conectando">
+            <span class="status-ponto" aria-hidden="true"></span>
+            <span id="status-api-texto">Conectando à API…</span>
+        </p>
+    </header>
 
-    <nav>
-        <button data-tab="marcas">Marcas</button>
-        <button data-tab="veiculos">Veiculos</button>
-        <button data-tab="clientes">Clientes</button>
-        <button data-tab="vendas">Vendas</button>
+    <noscript>
+        <p class="alerta alerta-erro">Esta página precisa de JavaScript para funcionar. Ative o JavaScript no navegador e recarregue.</p>
+    </noscript>
+
+    <nav class="abas" role="tablist" aria-label="Seções">
+        <button type="button" role="tab" id="aba-marcas" aria-controls="tab-marcas" data-tab="marcas">Marcas</button>
+        <button type="button" role="tab" id="aba-veiculos" aria-controls="tab-veiculos" data-tab="veiculos">Veículos</button>
+        <button type="button" role="tab" id="aba-clientes" aria-controls="tab-clientes" data-tab="clientes">Clientes</button>
+        <button type="button" role="tab" id="aba-vendas" aria-controls="tab-vendas" data-tab="vendas">Vendas</button>
     </nav>
 
-    <section id="tab-marcas" class="tab">
-        <h2>Marcas</h2>
-        <form id="form-marca">
-            <input type="text" name="nome" placeholder="Nome da marca" required>
-            <input type="text" name="pais" placeholder="Pais">
-            <button type="submit">Adicionar</button>
-        </form>
-        <table>
-            <thead>
-                <tr><th>Nome</th><th>Pais</th><th></th></tr>
-            </thead>
-            <tbody id="lista-marcas"></tbody>
-        </table>
-    </section>
+    <main>
+        <!-- ============ Marcas ============ -->
+        <section id="tab-marcas" class="tab" role="tabpanel" aria-labelledby="aba-marcas">
+            <h2>Marcas</h2>
+            <form id="form-marca" class="formulario" novalidate>
+                <div class="alerta alerta-erro form-alerta" role="alert" hidden></div>
+                <div class="campo">
+                    <label for="marca-nome">Nome da marca</label>
+                    <input id="marca-nome" type="text" name="nome" maxlength="100" autocomplete="off">
+                </div>
+                <div class="campo">
+                    <label for="marca-pais">País <span class="opcional">(opcional)</span></label>
+                    <input id="marca-pais" type="text" name="pais" maxlength="100" autocomplete="off">
+                </div>
+                <button type="submit" class="btn">Adicionar marca</button>
+            </form>
 
-    <section id="tab-veiculos" class="tab">
-        <h2>Veiculos</h2>
-        <form id="form-veiculo">
-            <select name="marca_id" id="select-marca" required></select>
-            <input type="text" name="modelo" placeholder="Modelo" required>
-            <input type="number" name="ano" placeholder="Ano" required>
-            <input type="number" name="preco" placeholder="Preco" step="0.01" required>
-            <button type="submit">Adicionar</button>
-        </form>
-        <div>
-            <input type="text" id="busca-veiculo" placeholder="Buscar por modelo">
-            <button id="btn-buscar-veiculo">Buscar</button>
-        </div>
-        <table>
-            <thead>
-                <tr><th>Modelo</th><th>Marca</th><th>Ano</th><th>Preco</th><th></th></tr>
-            </thead>
-            <tbody id="lista-veiculos"></tbody>
-        </table>
-    </section>
+            <div class="alerta alerta-erro" id="erro-marcas" role="alert" hidden></div>
+            <div class="tabela-wrap">
+                <table>
+                    <caption class="sr-only">Marcas cadastradas</caption>
+                    <thead>
+                        <tr><th scope="col">Nome</th><th scope="col">País</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
+                    </thead>
+                    <tbody id="lista-marcas"><tr class="linha-vazia"><td colspan="3">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+        </section>
 
-    <section id="tab-clientes" class="tab">
-        <h2>Clientes</h2>
-        <form id="form-cliente">
-            <input type="text" name="nome" placeholder="Nome" required>
-            <input type="email" name="email" placeholder="Email">
-            <input type="text" name="telefone" placeholder="Telefone">
-            <button type="submit">Adicionar</button>
-        </form>
-        <table>
-            <thead>
-                <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th></tr>
-            </thead>
-            <tbody id="lista-clientes"></tbody>
-        </table>
-    </section>
+        <!-- ============ Veículos ============ -->
+        <section id="tab-veiculos" class="tab" role="tabpanel" aria-labelledby="aba-veiculos">
+            <h2>Veículos</h2>
+            <form id="form-veiculo" class="formulario" novalidate>
+                <div class="alerta alerta-erro form-alerta" role="alert" hidden></div>
+                <div class="campo">
+                    <label for="select-marca">Marca</label>
+                    <select id="select-marca" name="marca_id"></select>
+                </div>
+                <div class="campo">
+                    <label for="veiculo-modelo">Modelo</label>
+                    <input id="veiculo-modelo" type="text" name="modelo" maxlength="150" autocomplete="off">
+                </div>
+                <div class="campo campo-curto">
+                    <label for="veiculo-ano">Ano</label>
+                    <input id="veiculo-ano" type="number" name="ano" inputmode="numeric" step="1">
+                </div>
+                <div class="campo">
+                    <label for="veiculo-preco">Preço (R$)</label>
+                    <input id="veiculo-preco" type="number" name="preco" inputmode="decimal" step="0.01">
+                </div>
+                <button type="submit" class="btn">Adicionar veículo</button>
+            </form>
 
-    <section id="tab-vendas" class="tab">
-        <h2>Vendas</h2>
-        <form id="form-venda">
-            <select name="veiculo_id" id="select-veiculo" required></select>
-            <select name="cliente_id" id="select-cliente" required></select>
-            <input type="text" name="vendedor" placeholder="Vendedor" required>
-            <input type="number" name="preco_venda" placeholder="Preco da venda" step="0.01" required>
-            <button type="submit">Registrar</button>
+            <form id="form-busca-veiculo" class="busca" role="search">
+                <label for="busca-veiculo" class="sr-only">Buscar veículo por modelo</label>
+                <input id="busca-veiculo" type="search" placeholder="Buscar por modelo" autocomplete="off">
+                <button type="submit" id="btn-buscar-veiculo" class="btn btn-secundario">Buscar</button>
+                <button type="button" id="btn-limpar-busca" class="btn btn-secundario" hidden>Limpar busca</button>
+            </form>
+
+            <div class="alerta alerta-erro" id="erro-veiculos" role="alert" hidden></div>
+            <div class="tabela-wrap">
+                <table>
+                    <caption class="sr-only">Veículos cadastrados</caption>
+                    <thead>
+                        <tr><th scope="col">Modelo</th><th scope="col">Marca</th><th scope="col" class="num">Ano</th><th scope="col" class="num">Preço</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
+                    </thead>
+                    <tbody id="lista-veiculos"><tr class="linha-vazia"><td colspan="5">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ============ Clientes ============ -->
+        <section id="tab-clientes" class="tab" role="tabpanel" aria-labelledby="aba-clientes">
+            <h2>Clientes</h2>
+            <form id="form-cliente" class="formulario" novalidate>
+                <div class="alerta alerta-erro form-alerta" role="alert" hidden></div>
+                <div class="campo">
+                    <label for="cliente-nome">Nome</label>
+                    <input id="cliente-nome" type="text" name="nome" maxlength="150" autocomplete="off">
+                </div>
+                <div class="campo">
+                    <label for="cliente-email">E-mail <span class="opcional">(opcional)</span></label>
+                    <input id="cliente-email" type="email" name="email" autocomplete="off">
+                </div>
+                <div class="campo">
+                    <label for="cliente-telefone">Telefone <span class="opcional">(opcional)</span></label>
+                    <input id="cliente-telefone" type="tel" name="telefone" maxlength="20" autocomplete="off">
+                </div>
+                <button type="submit" class="btn">Adicionar cliente</button>
+            </form>
+
+            <div class="alerta alerta-erro" id="erro-clientes" role="alert" hidden></div>
+            <div class="tabela-wrap">
+                <table>
+                    <caption class="sr-only">Clientes cadastrados</caption>
+                    <thead>
+                        <tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Telefone</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
+                    </thead>
+                    <tbody id="lista-clientes"><tr class="linha-vazia"><td colspan="4">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ============ Vendas ============ -->
+        <section id="tab-vendas" class="tab" role="tabpanel" aria-labelledby="aba-vendas">
+            <h2>Vendas</h2>
+            <form id="form-venda" class="formulario" novalidate>
+                <div class="alerta alerta-erro form-alerta" role="alert" hidden></div>
+                <div class="campo">
+                    <label for="select-veiculo">Veículo</label>
+                    <select id="select-veiculo" name="veiculo_id"></select>
+                </div>
+                <div class="campo">
+                    <label for="select-cliente">Cliente</label>
+                    <select id="select-cliente" name="cliente_id"></select>
+                </div>
+                <div class="campo">
+                    <label for="venda-vendedor">Vendedor</label>
+                    <input id="venda-vendedor" type="text" name="vendedor" maxlength="150" autocomplete="off">
+                </div>
+                <div class="campo">
+                    <label for="venda-preco">Preço da venda (R$)</label>
+                    <input id="venda-preco" type="number" name="preco_venda" inputmode="decimal" step="0.01">
+                </div>
+                <button type="submit" class="btn">Registrar venda</button>
+            </form>
+
+            <div class="alerta alerta-erro" id="erro-vendas" role="alert" hidden></div>
+            <div class="tabela-wrap">
+                <table>
+                    <caption class="sr-only">Vendas registradas</caption>
+                    <thead>
+                        <tr><th scope="col">Veículo</th><th scope="col">Cliente</th><th scope="col">Vendedor</th><th scope="col" class="num">Preço</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
+                    </thead>
+                    <tbody id="lista-vendas"><tr class="linha-vazia"><td colspan="5">Carregando…</td></tr></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Avisos temporários (sucesso e falhas de ações) -->
+    <div id="avisos" class="avisos"></div>
+
+    <!-- Confirmação antes de excluir -->
+    <dialog id="dialogo-confirmar" aria-labelledby="dialogo-titulo" aria-describedby="dialogo-texto">
+        <form method="dialog">
+            <h2 id="dialogo-titulo"></h2>
+            <p id="dialogo-texto"></p>
+            <div class="dialogo-acoes">
+                <button type="submit" value="cancelar" class="btn btn-secundario">Cancelar</button>
+                <button type="submit" value="confirmar" class="btn btn-perigo">Excluir</button>
+            </div>
         </form>
-        <table>
-            <thead>
-                <tr><th>Veiculo</th><th>Cliente</th><th>Vendedor</th><th>Preco</th><th></th></tr>
-            </thead>
-            <tbody id="lista-vendas"></tbody>
-        </table>
-    </section>
+    </dialog>
 
     <script src="script.js"></script>
 </body>
