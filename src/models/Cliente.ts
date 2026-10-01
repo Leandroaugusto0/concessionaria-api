@@ -17,7 +17,7 @@ async function findById(id: string) {
         .from("clientes")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
     if (error) {
         throw error;
@@ -55,7 +55,10 @@ async function update(id: string, cliente: {
 }) {
     const { data, error } = await supabase
         .from("clientes")
-        .update(cliente)
+        .update({
+            ...cliente,
+            updated_at: new Date().toISOString(),
+        })
         .eq("id", id)
         .select()
         .single();
@@ -68,17 +71,14 @@ async function update(id: string, cliente: {
 }
 
 async function remove(id: string) {
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from("clientes")
         .delete()
-        .eq("id", id)
-        .single();
+        .eq("id", id);
 
     if (error) {
         throw error;
     }
-
-    return data;
 }
 
 export default {
