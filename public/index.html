@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Concessionaria</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Concessionaria</h1>
+
+    <nav>
+        <button data-tab="marcas">Marcas</button>
+        <button data-tab="veiculos">Veiculos</button>
+        <button data-tab="clientes">Clientes</button>
+        <button data-tab="vendas">Vendas</button>
+    </nav>
+
+    <section id="tab-marcas" class="tab">
+        <h2>Marcas</h2>
+        <form id="form-marca">
+            <input type="text" name="nome" placeholder="Nome da marca" required>
+            <input type="text" name="pais" placeholder="Pais">
+            <button type="submit">Adicionar</button>
+        </form>
+        <table>
+            <thead>
+                <tr><th>Nome</th><th>Pais</th><th></th></tr>
+            </thead>
+            <tbody id="lista-marcas"></tbody>
+        </table>
+    </section>
+
+    <section id="tab-veiculos" class="tab">
+        <h2>Veiculos</h2>
+        <form id="form-veiculo">
+            <select name="marca_id" id="select-marca" required></select>
+            <input type="text" name="modelo" placeholder="Modelo" required>
+            <input type="number" name="ano" placeholder="Ano" required>
+            <input type="number" name="preco" placeholder="Preco" step="0.01" required>
+            <button type="submit">Adicionar</button>
+        </form>
+        <div>
+            <input type="text" id="busca-veiculo" placeholder="Buscar por modelo">
+            <button id="btn-buscar-veiculo">Buscar</button>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Modelo</th><th>Marca</th><th>Ano</th><th>Preco</th><th></th></tr>
+            </thead>
+            <tbody id="lista-veiculos"></tbody>
+        </table>
+    </section>
+
+    <section id="tab-clientes" class="tab">
+        <h2>Clientes</h2>
+        <form id="form-cliente">
+            <input type="text" name="nome" placeholder="Nome" required>
+            <input type="email" name="email" placeholder="Email">
+            <input type="text" name="telefone" placeholder="Telefone">
+            <button type="submit">Adicionar</button>
+        </form>
+        <table>
+            <thead>
+                <tr><th>Nome</th><th>Email</th><th>Telefone</th><th></th></tr>
+            </thead>
+            <tbody id="lista-clientes"></tbody>
+        </table>
+    </section>
+
+    <section id="tab-vendas" class="tab">
+        <h2>Vendas</h2>
+        <form id="form-venda">
+            <select name="veiculo_id" id="select-veiculo" required></select>
+            <select name="cliente_id" id="select-cliente" required></select>
+            <input type="text" name="vendedor" placeholder="Vendedor" required>
+            <input type="number" name="preco_venda" placeholder="Preco da venda" step="0.01" required>
+            <button type="submit">Registrar</button>
+        </form>
+        <table>
+            <thead>
+                <tr><th>Veiculo</th><th>Cliente</th><th>Vendedor</th><th>Preco</th><th></th></tr>
+            </thead>
+            <tbody id="lista-vendas"></tbody>
+        </table>
+    </section>
+
+    <script src="script.js"></script>
+</body>
+</html>

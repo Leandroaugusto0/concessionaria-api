@@ -6,16 +6,7 @@ import vendaRoutes from "./routes/vendaRoutes.js";
 
 const app = express();
 app.use(express.json());
-
-// =================
-// Root
-// =================
-app.get("/", (req, res) => {
-    res.status(200).json({
-        message: "API Concessionária",
-        version: "1.0.0"
-    });
-});
+app.use(express.static("public"));
 
 // =================
 // Marcas
