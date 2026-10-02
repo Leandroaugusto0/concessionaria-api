@@ -224,6 +224,9 @@ function confirmar(titulo, texto) {
 
 const estado = { marcas: [], veiculos: [], clientes: [], vendas: [] };
 
+// Registro que está sendo editado em cada formulário (null = formulário em modo "adicionar")
+const emEdicao = { marcas: null, veiculos: null, clientes: null, vendas: null };
+
 // Listas completas, usadas para preencher os <select> dos formulários
 // (a tabela de veículos pode estar filtrada pela busca)
 const opcoes = { marcas: [], veiculos: [], clientes: [] };
@@ -300,7 +303,10 @@ function renderTabela(chave) {
             const celulas = ent.celulas(item)
                 .map((html, i) => `<td${ent.numericas?.includes(i) ? ' class="num"' : ""}>${html}</td>`)
                 .join("");
-            return `<tr>${celulas}<td class="acoes">
+            const editando = emEdicao[chave]?.id === item.id;
+            return `<tr${editando ? ' class="editando"' : ""}>${celulas}<td class="acoes">
+                <button type="button" class="btn-editar" data-acao="editar" data-chave="${chave}" data-id="${esc(item.id)}"
+                    aria-label="Editar ${esc(ent.rotulo(item))}">Editar</button>
                 <button type="button" class="btn-excluir" data-acao="excluir" data-chave="${chave}" data-id="${esc(item.id)}"
                     aria-label="Excluir ${esc(ent.rotulo(item))}">Excluir</button>
             </td></tr>`;
@@ -329,6 +335,7 @@ function atualizarSelects() {
         vazio: "Nenhuma marca cadastrada",
         rotulo: (m) => m.nome,
     });
+    if (emEdicao.vendas) return; // na edição de venda, veículo e cliente ficam travados
     preencherSelect($("#select-veiculo"), opcoes.veiculos.filter((v) => v.disponivel), {
         placeholder: "Selecione o veículo",
         vazio: "Nenhum veículo disponível",
@@ -411,6 +418,7 @@ async function excluir(chave, id, botao) {
     try {
         await api("DELETE", `${ent.rota}/${encodeURIComponent(id)}`);
         avisar(ent.removida, "", "ok");
+        if (emEdicao[chave]?.id === id) sairEdicao(chave);
     } catch (err) {
         avisarErro(`Não foi possível excluir ${ent.artigo}`, err);
     } finally {
@@ -453,6 +461,13 @@ const FORMULARIOS = {
             return erros;
         },
         corpo: (d) => ({ nome: d.nome, pais: d.pais || undefined }),
+        sucessoEdicao: "Marca atualizada.",
+        falhaEdicao: "Não foi possível atualizar a marca",
+        preencher(form, m) {
+            form.elements.nome.value = m.nome ?? "";
+            form.elements.pais.value = m.pais ?? "";
+        },
+        corpoEdicao: (d) => ({ nome: d.nome, pais: d.pais }),
         aposSucesso: () => carregar("marcas"),
         aposFalha: () => carregar("marcas"),
     },
@@ -485,6 +500,16 @@ const FORMULARIOS = {
             return erros;
         },
         corpo: (d) => ({ marca_id: d.marca_id, modelo: d.modelo, ano: Number(d.ano), preco: Number(d.preco) }),
+        sucessoEdicao: "Veículo atualizado.",
+        falhaEdicao: "Não foi possível atualizar o veículo",
+        preencher(form, v) {
+            form.elements.marca_id.value = v.marca_id ?? "";
+            form.elements.modelo.value = v.modelo ?? "";
+            form.elements.ano.value = v.ano ?? "";
+            form.elements.preco.value = v.preco ?? "";
+        },
+        // a situação (disponível ou vendido) não é editada aqui: quem muda é a venda
+        corpoEdicao: (d) => ({ marca_id: d.marca_id, modelo: d.modelo, ano: Number(d.ano), preco: Number(d.preco) }),
         aposSucesso: () => carregarVeiculos(),
         aposFalha: () => carregar("marcas"),
     },
@@ -503,6 +528,14 @@ const FORMULARIOS = {
             return erros;
         },
         corpo: (d) => ({ nome: d.nome, email: d.email || undefined, telefone: d.telefone || undefined }),
+        sucessoEdicao: "Cliente atualizado.",
+        falhaEdicao: "Não foi possível atualizar o cliente",
+        preencher(form, c) {
+            form.elements.nome.value = c.nome ?? "";
+            form.elements.email.value = c.email ?? "";
+            form.elements.telefone.value = c.telefone ?? "";
+        },
+        corpoEdicao: (d) => ({ nome: d.nome, email: d.email, telefone: d.telefone }),
         aposSucesso: () => carregar("clientes"),
         aposFalha: () => carregar("clientes"),
     },
@@ -512,12 +545,12 @@ const FORMULARIOS = {
         rota: "/vendas",
         sucesso: "Venda registrada.",
         falha: "Não foi possível registrar a venda",
-        validar(d) {
+        validar(d, item) {
             const erros = {};
-            if (!d.veiculo_id) {
+            if (!item && !d.veiculo_id) {
                 erros.veiculo_id = opcoes.veiculos.some((v) => v.disponivel) ? "Selecione o veículo." : "Nenhum veículo disponível para venda.";
             }
-            if (!d.cliente_id) {
+            if (!item && !d.cliente_id) {
                 erros.cliente_id = opcoes.clientes.length ? "Selecione o cliente." : "Cadastre um cliente antes de registrar vendas.";
             }
             if (!d.vendedor) erros.vendedor = "Informe o vendedor.";
@@ -534,6 +567,32 @@ const FORMULARIOS = {
             vendedor: d.vendedor,
             preco_venda: Number(d.preco_venda),
         }),
+        sucessoEdicao: "Venda atualizada.",
+        falhaEdicao: "Não foi possível atualizar a venda",
+        preencher(form, v) {
+            // veículo e cliente não podem ser trocados depois que a venda foi registrada
+            const veiculo = form.elements.veiculo_id;
+            const cliente = form.elements.cliente_id;
+            veiculo.innerHTML = `<option value="${esc(v.veiculo_id)}">${esc(v.veiculos?.modelo ?? "Veículo")}</option>`;
+            cliente.innerHTML = `<option value="${esc(v.cliente_id)}">${esc(v.clientes?.nome ?? "Cliente")}</option>`;
+            veiculo.disabled = true;
+            cliente.disabled = true;
+
+            $("#campo-venda-status").hidden = false;
+            form.elements.status.disabled = false;
+            form.elements.status.value = v.status ?? "pendente";
+
+            form.elements.vendedor.value = v.vendedor ?? "";
+            form.elements.preco_venda.value = v.preco_venda ?? "";
+        },
+        aoSair(form) {
+            form.elements.veiculo_id.disabled = false;
+            form.elements.cliente_id.disabled = false;
+            form.elements.status.disabled = true;
+            $("#campo-venda-status").hidden = true;
+        },
+        // cancelar a venda devolve o veículo ao estoque (a API cuida disso)
+        corpoEdicao: (d) => ({ vendedor: d.vendedor, preco_venda: Number(d.preco_venda), status: d.status }),
         aposSucesso: () => Promise.allSettled([carregar("vendas"), carregarVeiculos()]),
         // veículo ou cliente podem ter sido removidos por outra pessoa
         aposFalha: () => Promise.allSettled([carregarVeiculos(), carregar("clientes")]),
@@ -543,14 +602,31 @@ const FORMULARIOS = {
 function ligarFormulario(cfg) {
     const form = $(cfg.seletor);
     const botao = $("button[type='submit']", form);
-    const rotuloBotao = botao.textContent;
+
+    // aviso "Editando ..." e botão de cancelar, que só aparecem em modo edição
+    const banner = document.createElement("p");
+    banner.className = "modo-edicao";
+    banner.setAttribute("role", "status");
+    banner.hidden = true;
+    $(".form-alerta", form).after(banner);
+
+    const cancelar = document.createElement("button");
+    cancelar.type = "button";
+    cancelar.className = "btn btn-secundario";
+    cancelar.textContent = "Cancelar edição";
+    cancelar.hidden = true;
+    botao.after(cancelar);
+    cancelar.addEventListener("click", () => sairEdicao(cfg.chave));
+
+    Object.assign(cfg, { form, botao, banner, cancelar, rotuloBotao: botao.textContent });
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         limparErrosFormulario(form);
 
+        const item = emEdicao[cfg.chave];
         const dados = lerCampos(form);
-        const erros = cfg.validar(dados);
+        const erros = cfg.validar(dados, item);
         const nomes = Object.keys(erros);
 
         if (nomes.length > 0) {
@@ -563,22 +639,76 @@ function ligarFormulario(cfg) {
         botao.textContent = "Salvando…";
 
         try {
-            await api("POST", cfg.rota, cfg.corpo(dados));
-            form.reset();
-            avisar(cfg.sucesso, "", "ok");
-            cfg.aposSucesso();
+            if (item) {
+                await api("PUT", `${cfg.rota}/${encodeURIComponent(item.id)}`, cfg.corpoEdicao(dados, item));
+                sairEdicao(cfg.chave);
+                avisar(cfg.sucessoEdicao, "", "ok");
+                carregarTudo(); // o nome de uma marca ou o status de uma venda aparecem em outras abas
+            } else {
+                await api("POST", cfg.rota, cfg.corpo(dados));
+                form.reset();
+                avisar(cfg.sucesso, "", "ok");
+                cfg.aposSucesso();
+            }
         } catch (err) {
-            mostrarErroFormulario(form, cfg.falha, err);
-            // Se a API recusou por causa dos dados (ex.: marca que não existe mais), atualiza as listas
-            if (err instanceof ApiError && err.status >= 400 && err.status < 500) cfg.aposFalha();
+            mostrarErroFormulario(form, item ? cfg.falhaEdicao : cfg.falha, err);
+            // Se a API recusou por causa dos dados (ex.: item removido por outra pessoa), atualiza as listas
+            if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
+                if (item && err.status === 404) sairEdicao(cfg.chave);
+                cfg.aposFalha();
+            }
         } finally {
             botao.disabled = false;
-            botao.textContent = rotuloBotao;
+            botao.textContent = emEdicao[cfg.chave] ? "Salvar alterações" : cfg.rotuloBotao;
         }
     });
 }
 
-Object.values(FORMULARIOS).forEach(ligarFormulario);
+Object.entries(FORMULARIOS).forEach(([chave, cfg]) => {
+    cfg.chave = chave;
+    ligarFormulario(cfg);
+});
+
+/* =====================================================================
+   Edição: o formulário da aba é reaproveitado (preenchido e enviado com PUT)
+   ===================================================================== */
+
+function iniciarEdicao(chave, id) {
+    const cfg = FORMULARIOS[chave];
+    const item = estado[chave].find((i) => i.id === id);
+    if (!item) return;
+
+    if (emEdicao[chave]) sairEdicao(chave); // troca de um registro em edição para outro
+    limparErrosFormulario(cfg.form);
+
+    emEdicao[chave] = item;
+    cfg.preencher(cfg.form, item);
+
+    cfg.banner.textContent = `Editando ${ENTIDADES[chave].rotulo(item)}. Altere os campos e clique em “Salvar alterações”.`;
+    cfg.banner.hidden = false;
+    cfg.cancelar.hidden = false;
+    cfg.botao.textContent = "Salvar alterações";
+
+    renderTabela(chave); // destaca a linha em edição
+    cfg.form.scrollIntoView({ block: "nearest" });
+    cfg.form.querySelector("input:not([disabled]), select:not([disabled])")?.focus();
+}
+
+function sairEdicao(chave) {
+    const cfg = FORMULARIOS[chave];
+    emEdicao[chave] = null;
+
+    limparErrosFormulario(cfg.form);
+    cfg.form.reset();
+    cfg.aoSair?.(cfg.form);
+
+    cfg.banner.hidden = true;
+    cfg.cancelar.hidden = true;
+    cfg.botao.textContent = cfg.rotuloBotao;
+
+    renderTabela(chave);
+    atualizarSelects();
+}
 
 /* =====================================================================
    Busca de veículos
@@ -611,7 +741,9 @@ document.addEventListener("click", (e) => {
     const botao = e.target.closest("[data-acao]");
     if (!botao) return;
 
-    if (botao.dataset.acao === "excluir") {
+    if (botao.dataset.acao === "editar") {
+        iniciarEdicao(botao.dataset.chave, botao.dataset.id);
+    } else if (botao.dataset.acao === "excluir") {
         excluir(botao.dataset.chave, botao.dataset.id, botao);
     } else if (botao.dataset.acao === "recarregar") {
         recarregar(botao.dataset.chave);

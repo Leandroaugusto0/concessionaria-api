@@ -151,6 +151,14 @@
                     <label for="venda-preco">Preço da venda (R$)</label>
                     <input id="venda-preco" type="number" name="preco_venda" inputmode="decimal" step="0.01">
                 </div>
+                <div class="campo" id="campo-venda-status" hidden>
+                    <label for="venda-status">Status</label>
+                    <select id="venda-status" name="status" disabled>
+                        <option value="pendente">Pendente</option>
+                        <option value="concluida">Concluída</option>
+                        <option value="cancelada">Cancelada (devolve o veículo ao estoque)</option>
+                    </select>
+                </div>
                 <button type="submit" class="btn">Registrar venda</button>
             </form>
 
