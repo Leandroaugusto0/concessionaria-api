@@ -17,7 +17,10 @@ Esse projeto foi desenvolvido como APS da disciplina de Back-End Development, us
 - TypeScript
 - Express
 - Supabase (PostgreSQL)
+- @supabase/supabase-js (cliente do Supabase para Node)
+- tsx (executa TypeScript direto no Node em desenvolvimento)
 - Git
+- HTML, CSS e JavaScript (front basico em `public/`)
 
 ## Entidades e relacionamento
 
@@ -64,7 +67,12 @@ Esse projeto foi desenvolvido como APS da disciplina de Back-End Development, us
 **Relacionamentos:**
 
 - Uma Marca pode ter varios Veiculos, e cada Veiculo pertence a uma Marca.
-- Uma Venda relaciona um Veiculo e um Cliente (cada venda tem um veiculo e um cliente associado).
+- Um Cliente pode ter varias Vendas, e cada Venda pertence a um Cliente.
+- Um Veiculo pode aparecer em Vendas, e cada Venda se refere a um Veiculo.
+
+Os relacionamentos sao feitos por chave estrangeira (`marca_id`, `veiculo_id` e `cliente_id`). Por isso a API nao deixa excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas (retorna `409`).
+
+**Regra de negocio da venda:** ao registrar uma venda, o veiculo passa a ficar indisponivel (`disponivel = false`) e nao pode ser vendido de novo. Se a venda for cancelada (`status: "cancelada"`) ou excluida, o veiculo volta a ficar disponivel.
 
 ## Estrutura do projeto
 
@@ -74,9 +82,11 @@ src/
 ├── controller/   -> regras de cada rota (recebe a requisicao e devolve a resposta)
 ├── models/       -> acesso ao banco de dados (supabase)
 ├── routes/       -> definicao das rotas de cada entidade
+├── utils/        -> funcoes de validacao usadas pelos controllers
 ├── app.ts        -> configuracao do express e das rotas
 └── server.ts     -> inicializacao do servidor
 
+database/         -> script sql de criacao das tabelas
 public/           -> front basico (html/css/js) pra testar a api pelo navegador
 ```
 
@@ -85,7 +95,7 @@ public/           -> front basico (html/css/js) pra testar a api pelo navegador
 Clonar o repositorio:
 
 ```
-git clone <url-do-repositorio>
+git clone https://github.com/Leandroaugusto0/concessionaria-api.git
 cd concessionaria-api
 ```
 
@@ -94,6 +104,8 @@ Instalar as dependencias:
 ```
 npm install
 ```
+
+Criar as tabelas no Supabase executando o script `database/schema.sql` no SQL Editor.
 
 Criar o arquivo `.env` na raiz (usando o `.env.example` como base) com as credenciais do seu projeto Supabase.
 
@@ -118,6 +130,7 @@ npm start
 |---|---|
 | `SUPABASE_URL` | URL do projeto no Supabase (Project Overview > Project URL) |
 | `SUPABASE_SECRET_KEY` | Secret key do projeto (Project Settings > API Keys > Secret keys) |
+| `PORT` | Porta do servidor (opcional, padrao 3000) |
 
 Veja o arquivo `.env.example` para o formato esperado. O `.env` com as credenciais reais nunca deve ir pro repositorio.
 
@@ -125,7 +138,7 @@ Veja o arquivo `.env.example` para o formato esperado. O `.env` com as credencia
 
 O banco usado e o Postgres do Supabase, com 4 tabelas: `marcas`, `veiculos`, `clientes` e `vendas`.
 
-As tabelas foram criadas direto no SQL Editor do Supabase, com o seguinte script:
+As tabelas foram criadas direto no SQL Editor do Supabase. O script tambem esta no arquivo `database/schema.sql`:
 
 ```sql
 create table marcas (
@@ -231,6 +244,25 @@ create table vendas (
 | PUT | /vendas/:id | Atualiza uma venda |
 | DELETE | /vendas/:id | Remove uma venda |
 
+### Codigos de resposta
+
+| Codigo | Quando acontece |
+|---|---|
+| 200 | Consulta, atualizacao ou exclusao feita com sucesso |
+| 201 | Registro criado com sucesso |
+| 400 | Dados invalidos, id em formato invalido ou registro relacionado inexistente (ex: `marca_id` que nao existe, veiculo que ja foi vendido) |
+| 404 | Registro ou rota nao encontrado |
+| 409 | Exclusao bloqueada porque existem registros relacionados |
+| 500 | Erro interno do servidor |
+
+Todas as respostas de erro seguem o formato:
+
+```json
+{
+  "message": "Marca nao encontrada."
+}
+```
+
 ## Exemplos de requisições
 
 **POST /marcas**
@@ -273,4 +305,58 @@ create table vendas (
   "preco_venda": 140000.00,
   "forma_pagamento": "financiamento"
 }
+```
+
+**PUT /marcas/:id**
+```json
+{
+  "nome": "Toyota",
+  "pais": "Japão",
+  "ativo": true
+}
+```
+
+**PUT /veiculos/:id**
+```json
+{
+  "marca_id": "id-da-marca-aqui",
+  "modelo": "Corolla XEi",
+  "ano": 2023,
+  "preco": 139900.00,
+  "km": 15000,
+  "combustivel": "Flex",
+  "cor": "Prata",
+  "disponivel": false,
+  "ativo": true
+}
+```
+
+**PUT /clientes/:id**
+```json
+{
+  "nome": "Maria da Silva Santos",
+  "email": "maria.santos@email.com",
+  "telefone": "(11) 98888-0000",
+  "cpf": "123.456.789-00",
+  "ativo": true
+}
+```
+
+**PUT /vendas/:id**
+```json
+{
+  "vendedor": "João Marcos",
+  "preco_venda": 138000.00,
+  "forma_pagamento": "financiamento",
+  "status": "concluida"
+}
+```
+
+> Na venda, `veiculo_id` e `cliente_id` nao podem ser alterados. O `status` aceita `pendente`, `concluida` ou `cancelada`. Mudar o status para `cancelada` devolve o veiculo para o estoque.
+
+**Exemplos de filtros de veiculos**
+```
+GET /veiculos?busca=corolla
+GET /veiculos?disponivel=true&ordenar=preco_asc
+GET /veiculos?marca_id=id-da-marca-aqui
 ```
