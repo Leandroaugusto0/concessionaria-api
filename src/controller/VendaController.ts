@@ -144,6 +144,15 @@ async function create(req: Request, res: Response) {
       return;
     }
 
+    // um veiculo so pode ser vendido se ainda estiver disponivel
+    if (!veiculo.disponivel) {
+      res.status(400).json({
+        message: "O veiculo informado nao esta disponivel para venda.",
+      });
+
+      return;
+    }
+
     const cliente = await Cliente.findById(cliente_id);
 
     if (!cliente) {
@@ -162,6 +171,11 @@ async function create(req: Request, res: Response) {
       forma_pagamento,
       status,
     });
+
+    // depois de vender, o veiculo deixa de ficar disponivel
+    if (status !== "cancelada") {
+      await Veiculo.setDisponivel(veiculo_id, false);
+    }
 
     res.status(201).json(venda);
   } catch (error) {
@@ -216,12 +230,28 @@ async function update(
       return;
     }
 
+    // se a venda cancelada for reativada, o veiculo precisa estar livre
+    if (existe.status === "cancelada" && status !== "cancelada") {
+      const veiculo = await Veiculo.findById(existe.veiculo_id);
+
+      if (!veiculo || !veiculo.disponivel) {
+        res.status(400).json({
+          message: "Nao e possivel reativar a venda porque o veiculo nao esta mais disponivel.",
+        });
+
+        return;
+      }
+    }
+
     const venda = await Venda.update(id, {
       vendedor: vendedor.trim(),
       preco_venda,
       forma_pagamento,
       status,
     });
+
+    // venda cancelada devolve o veiculo para o estoque; as outras mantem ele vendido
+    await Veiculo.setDisponivel(existe.veiculo_id, status === "cancelada");
 
     res.status(200).json(venda);
   } catch (error) {
@@ -259,6 +289,11 @@ async function remove(
     }
 
     await Venda.remove(id);
+
+    // se a venda ainda valia, o veiculo volta a ficar disponivel
+    if (existe.status !== "cancelada") {
+      await Veiculo.setDisponivel(existe.veiculo_id, true);
+    }
 
     res.status(200).json({
       message: "Venda removida com sucesso.",

@@ -103,6 +103,21 @@ async function update(id: string, veiculo: {
     return data;
 }
 
+// Marca o veiculo como disponivel ou indisponivel (usado quando uma venda e registrada, cancelada ou removida)
+async function setDisponivel(id: string, disponivel: boolean) {
+    const { error } = await supabase
+        .from("veiculos")
+        .update({
+            disponivel,
+            updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+    if (error) {
+        throw error;
+    }
+}
+
 async function remove(id: string) {
     const { error } = await supabase
         .from("veiculos")
@@ -119,5 +134,6 @@ export default {
     findById,
     create,
     update,
-    remove
+    remove,
+    setDisponivel
 }
