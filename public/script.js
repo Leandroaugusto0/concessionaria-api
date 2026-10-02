@@ -246,9 +246,12 @@ const ENTIDADES = {
         plural: "os veículos",
         artigo: "o veículo",
         removida: "Veículo removido.",
-        colunas: 4,
+        colunas: 5,
         numericas: [2, 3],
-        celulas: (v) => [esc(v.modelo), esc(v.marcas?.nome ?? "—"), esc(v.ano), esc(moeda(v.preco))],
+        celulas: (v) => [
+            esc(v.modelo), esc(v.marcas?.nome ?? "—"), esc(v.ano), esc(moeda(v.preco)),
+            v.disponivel ? '<span class="selo selo-ok">Disponível</span>' : '<span class="selo selo-vendido">Vendido</span>',
+        ],
         rotulo: (v) => v.modelo,
         vazio: () =>
             buscaAplicada
@@ -326,9 +329,9 @@ function atualizarSelects() {
         vazio: "Nenhuma marca cadastrada",
         rotulo: (m) => m.nome,
     });
-    preencherSelect($("#select-veiculo"), opcoes.veiculos, {
+    preencherSelect($("#select-veiculo"), opcoes.veiculos.filter((v) => v.disponivel), {
         placeholder: "Selecione o veículo",
-        vazio: "Nenhum veículo cadastrado",
+        vazio: "Nenhum veículo disponível",
         rotulo: (v) => `${v.modelo} (${v.marcas?.nome ?? "sem marca"}, ${v.ano})`,
     });
     preencherSelect($("#select-cliente"), opcoes.clientes, {
@@ -381,6 +384,7 @@ async function carregarVeiculos() {
 }
 
 function recarregar(chave) {
+    if (chave === "vendas") return Promise.allSettled([carregar("vendas"), carregarVeiculos()]);
     return chave === "veiculos" ? carregarVeiculos() : carregar(chave);
 }
 
@@ -511,7 +515,7 @@ const FORMULARIOS = {
         validar(d) {
             const erros = {};
             if (!d.veiculo_id) {
-                erros.veiculo_id = opcoes.veiculos.length ? "Selecione o veículo." : "Cadastre um veículo antes de registrar vendas.";
+                erros.veiculo_id = opcoes.veiculos.some((v) => v.disponivel) ? "Selecione o veículo." : "Nenhum veículo disponível para venda.";
             }
             if (!d.cliente_id) {
                 erros.cliente_id = opcoes.clientes.length ? "Selecione o cliente." : "Cadastre um cliente antes de registrar vendas.";
@@ -530,7 +534,7 @@ const FORMULARIOS = {
             vendedor: d.vendedor,
             preco_venda: Number(d.preco_venda),
         }),
-        aposSucesso: () => carregar("vendas"),
+        aposSucesso: () => Promise.allSettled([carregar("vendas"), carregarVeiculos()]),
         // veículo ou cliente podem ter sido removidos por outra pessoa
         aposFalha: () => Promise.allSettled([carregarVeiculos(), carregar("clientes")]),
     },
