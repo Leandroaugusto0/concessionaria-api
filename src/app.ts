@@ -5,6 +5,7 @@ import marcaRoutes from "./routes/marcaRoutes.js";
 import veiculoRoutes from "./routes/veiculoRoutes.js";
 import clienteRoutes from "./routes/clienteRoutes.js";
 import vendaRoutes from "./routes/vendaRoutes.js";
+import AppError from "./errors/AppError.js";
 
 const app = express();
 
@@ -59,6 +60,15 @@ app.use(
     if (error.type === "entity.parse.failed") {
       res.status(400).json({
         message: "JSON invalido no corpo da requisicao.",
+      });
+
+      return;
+    }
+
+    // erros proprios (ValidationError, NotFoundError, ConflictError...)
+    if (error instanceof AppError) {
+      res.status(error.statusCode).json({
+        message: error.message,
       });
 
       return;
