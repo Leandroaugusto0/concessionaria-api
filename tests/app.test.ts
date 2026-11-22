@@ -25,3 +25,20 @@ describe("tratamento de erros", () => {
     expect(resposta.status).toBe(400);
   });
 });
+
+describe("documentacao", () => {
+  it("serve a pagina do swagger em /api-docs", async () => {
+    const resposta = await request(app).get("/api-docs/");
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.text).toContain("swagger-ui");
+  });
+
+  it("serve a especificacao openapi em /api-docs.json", async () => {
+    const resposta = await request(app).get("/api-docs.json");
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.openapi).toBe("3.0.3");
+    expect(resposta.body.components.schemas.Erro).toBeDefined();
+  });
+});
