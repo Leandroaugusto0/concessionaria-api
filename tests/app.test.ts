@@ -40,5 +40,7 @@ describe("documentacao", () => {
     expect(resposta.status).toBe(200);
     expect(resposta.body.openapi).toBe("3.0.3");
     expect(resposta.body.components.schemas.Erro).toBeDefined();
+    expect(resposta.body.paths["/marcas"]).toBeDefined();
+    expect(resposta.body.paths["/marcas/{id}"].delete).toBeDefined();
   });
 });
