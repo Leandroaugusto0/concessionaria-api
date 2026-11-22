@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import Venda from "../models/Venda.js";
+import VendaRepository from "../repository/VendaRepository.js";
 import Veiculo from "../models/Veiculo.js";
 import Cliente from "../models/Cliente.js";
 import Validacao from "../utils/validacao.js";
@@ -47,7 +47,7 @@ function validarDadosVenda(body: any): string | null {
 
 async function getAll(req: Request, res: Response) {
   try {
-    const vendas = await Venda.findAll();
+    const vendas = await VendaRepository.findAll();
 
     res.status(200).json(vendas);
   } catch (error) {
@@ -74,7 +74,7 @@ async function getById(
   }
 
   try {
-    const venda = await Venda.findById(id);
+    const venda = await VendaRepository.findById(id);
 
     if (!venda) {
       res.status(404).json({
@@ -163,7 +163,7 @@ async function create(req: Request, res: Response) {
       return;
     }
 
-    const venda = await Venda.create({
+    const venda = await VendaRepository.create({
       veiculo_id,
       cliente_id,
       vendedor: vendedor.trim(),
@@ -220,7 +220,7 @@ async function update(
   } = req.body;
 
   try {
-    const existe = await Venda.findById(id);
+    const existe = await VendaRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -243,7 +243,7 @@ async function update(
       }
     }
 
-    const venda = await Venda.update(id, {
+    const venda = await VendaRepository.update(id, {
       vendedor: vendedor.trim(),
       preco_venda,
       forma_pagamento,
@@ -278,7 +278,7 @@ async function remove(
   }
 
   try {
-    const existe = await Venda.findById(id);
+    const existe = await VendaRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -288,7 +288,7 @@ async function remove(
       return;
     }
 
-    await Venda.remove(id);
+    await VendaRepository.remove(id);
 
     // se a venda ainda valia, o veiculo volta a ficar disponivel
     if (existe.status !== "cancelada") {
