@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import Marca from "../models/Marca.js";
+import MarcaRepository from "../repository/MarcaRepository.js";
 import Validacao from "../utils/validacao.js";
 
 // Valida os dados recebidos no corpo da requisicao.
@@ -28,7 +28,7 @@ function validarMarca(body: any): string | null {
 
 async function getAll(req: Request, res: Response) {
   try {
-    const marcas = await Marca.findAll();
+    const marcas = await MarcaRepository.findAll();
 
     res.status(200).json(marcas);
   } catch (error) {
@@ -55,7 +55,7 @@ async function getById(
   }
 
   try {
-    const marca = await Marca.findById(id);
+    const marca = await MarcaRepository.findById(id);
 
     if (!marca) {
       res.status(404).json({
@@ -89,7 +89,7 @@ async function create(req: Request, res: Response) {
   const { nome, pais, ativo } = req.body;
 
   try {
-    const marca = await Marca.create({
+    const marca = await MarcaRepository.create({
       nome: nome.trim(),
       pais,
       ativo,
@@ -132,7 +132,7 @@ async function update(
   const { nome, pais, ativo } = req.body;
 
   try {
-    const existe = await Marca.findById(id);
+    const existe = await MarcaRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -142,7 +142,7 @@ async function update(
       return;
     }
 
-    const marca = await Marca.update(id, {
+    const marca = await MarcaRepository.update(id, {
       nome: nome.trim(),
       pais,
       ativo,
@@ -173,7 +173,7 @@ async function remove(
   }
 
   try {
-    const existe = await Marca.findById(id);
+    const existe = await MarcaRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -183,7 +183,7 @@ async function remove(
       return;
     }
 
-    await Marca.remove(id);
+    await MarcaRepository.remove(id);
 
     res.status(200).json({
       message: "Marca removida com sucesso.",

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import Veiculo from "../models/Veiculo.js";
-import Marca from "../models/Marca.js";
+import MarcaRepository from "../repository/MarcaRepository.js";
 import Validacao from "../utils/validacao.js";
 
 // Valida os dados recebidos no corpo da requisicao.
@@ -159,7 +159,7 @@ async function create(req: Request, res: Response) {
   } = req.body;
 
   try {
-    const marca = await Marca.findById(marca_id);
+    const marca = await MarcaRepository.findById(marca_id);
 
     if (!marca) {
       res.status(400).json({
@@ -238,7 +238,7 @@ async function update(
       return;
     }
 
-    const marca = await Marca.findById(marca_id);
+    const marca = await MarcaRepository.findById(marca_id);
 
     if (!marca) {
       res.status(400).json({
