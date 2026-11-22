@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import Venda from "../models/Venda.js";
 import VendaRepository from "../repository/VendaRepository.js";
 import Veiculo from "../models/Veiculo.js";
 import Cliente from "../models/Cliente.js";
@@ -163,14 +164,15 @@ async function create(req: Request, res: Response) {
       return;
     }
 
-    const venda = await VendaRepository.create({
+    const novaVenda = new Venda(
       veiculo_id,
       cliente_id,
-      vendedor: vendedor.trim(),
+      vendedor.trim(),
       preco_venda,
       forma_pagamento,
-      status,
-    });
+      status
+    );
+    const venda = await VendaRepository.create(novaVenda);
 
     // depois de vender, o veiculo deixa de ficar disponivel
     if (status !== "cancelada") {
@@ -231,8 +233,8 @@ async function update(
     }
 
     // se a venda cancelada for reativada, o veiculo precisa estar livre
-    if (existe.status === "cancelada" && status !== "cancelada") {
-      const veiculo = await Veiculo.findById(existe.veiculo_id);
+    if (existe.isCancelada() && status !== "cancelada") {
+      const veiculo = await Veiculo.findById(existe.getVeiculoId());
 
       if (!veiculo || !veiculo.disponivel) {
         res.status(400).json({
@@ -243,15 +245,26 @@ async function update(
       }
     }
 
-    const venda = await VendaRepository.update(id, {
-      vendedor: vendedor.trim(),
-      preco_venda,
-      forma_pagamento,
-      status,
-    });
+    // so muda o que veio no corpo da requisicao
+    existe.changeVendedor(vendedor.trim());
+    existe.changePrecoVenda(preco_venda);
+
+    if (forma_pagamento !== undefined) {
+      existe.changeFormaPagamento(forma_pagamento);
+    }
+
+    if (status === "cancelada") {
+      existe.cancel();
+    } else if (status === "concluida") {
+      existe.conclude();
+    } else if (status === "pendente") {
+      existe.reopen();
+    }
+
+    const venda = await VendaRepository.update(id, existe);
 
     // venda cancelada devolve o veiculo para o estoque; as outras mantem ele vendido
-    await Veiculo.setDisponivel(existe.veiculo_id, status === "cancelada");
+    await Veiculo.setDisponivel(existe.getVeiculoId(), status === "cancelada");
 
     res.status(200).json(venda);
   } catch (error) {
@@ -291,8 +304,8 @@ async function remove(
     await VendaRepository.remove(id);
 
     // se a venda ainda valia, o veiculo volta a ficar disponivel
-    if (existe.status !== "cancelada") {
-      await Veiculo.setDisponivel(existe.veiculo_id, true);
+    if (!existe.isCancelada()) {
+      await Veiculo.setDisponivel(existe.getVeiculoId(), true);
     }
 
     res.status(200).json({

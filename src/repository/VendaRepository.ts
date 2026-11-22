@@ -1,21 +1,43 @@
 import supabase from "../config/supabase.js";
+import Venda from "../models/Venda.js";
 
-async function findAll() {
+// a consulta traz junto o modelo do veiculo e o nome do cliente
+const COLUNAS = "*, veiculos(id, modelo), clientes(id, nome)";
+
+// Converte uma linha da tabela em um objeto Venda
+function paraVenda(linha: any): Venda {
+    return Venda.restore(
+        linha.id,
+        linha.veiculo_id,
+        linha.cliente_id,
+        linha.vendedor,
+        linha.preco_venda,
+        linha.forma_pagamento,
+        linha.status,
+        linha.data_venda,
+        linha.created_at,
+        linha.updated_at,
+        linha.veiculos,
+        linha.clientes
+    );
+}
+
+async function findAll(): Promise<Venda[]> {
     const { data, error } = await supabase
         .from("vendas")
-        .select("*, veiculos(id, modelo), clientes(id, nome)");
+        .select(COLUNAS);
 
     if (error) {
         throw error;
     }
 
-    return data;
+    return data.map(paraVenda);
 }
 
-async function findById(id: string) {
+async function findById(id: string): Promise<Venda | null> {
     const { data, error } = await supabase
         .from("vendas")
-        .select("*, veiculos(id, modelo), clientes(id, nome)")
+        .select(COLUNAS)
         .eq("id", id)
         .maybeSingle();
 
@@ -23,20 +45,20 @@ async function findById(id: string) {
         throw error;
     }
 
-    return data;
+    return data ? paraVenda(data) : null;
 }
 
-async function create(venda: {
-    veiculo_id: string;
-    cliente_id: string;
-    vendedor: string;
-    preco_venda: number;
-    forma_pagamento?: string;
-    status?: string;
-}) {
+async function create(venda: Venda): Promise<Venda> {
     const { data, error } = await supabase
         .from("vendas")
-        .insert(venda)
+        .insert({
+            veiculo_id: venda.getVeiculoId(),
+            cliente_id: venda.getClienteId(),
+            vendedor: venda.getVendedor(),
+            preco_venda: venda.getPrecoVenda(),
+            forma_pagamento: venda.getFormaPagamento(),
+            status: venda.getStatus(),
+        })
         .select()
         .single();
 
@@ -44,19 +66,17 @@ async function create(venda: {
         throw error;
     }
 
-    return data;
+    return paraVenda(data);
 }
 
-async function update(id: string, venda: {
-    vendedor?: string;
-    preco_venda?: number;
-    forma_pagamento?: string;
-    status?: string;
-}) {
+async function update(id: string, venda: Venda): Promise<Venda> {
     const { data, error } = await supabase
         .from("vendas")
         .update({
-            ...venda,
+            vendedor: venda.getVendedor(),
+            preco_venda: venda.getPrecoVenda(),
+            forma_pagamento: venda.getFormaPagamento(),
+            status: venda.getStatus(),
             updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -67,7 +87,7 @@ async function update(id: string, venda: {
         throw error;
     }
 
-    return data;
+    return paraVenda(data);
 }
 
 async function remove(id: string) {
@@ -88,4 +108,3 @@ export default {
     update,
     remove
 }
-
