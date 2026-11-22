@@ -118,6 +118,27 @@ async function setDisponivel(id: string, disponivel: boolean) {
     }
 }
 
+// Reserva o veiculo para uma venda: so marca como indisponivel se ele ainda estiver disponivel.
+// E uma consulta so, entao duas vendas ao mesmo tempo nao conseguem pegar o mesmo carro.
+// Retorna false se alguem ja tinha reservado.
+async function reservar(id: string): Promise<boolean> {
+    const { data, error } = await supabase
+        .from("veiculos")
+        .update({
+            disponivel: false,
+            updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .eq("disponivel", true)
+        .select("id");
+
+    if (error) {
+        throw error;
+    }
+
+    return data.length > 0;
+}
+
 async function remove(id: string) {
     const { error } = await supabase
         .from("veiculos")
@@ -135,5 +156,6 @@ export default {
     create,
     update,
     remove,
-    setDisponivel
+    setDisponivel,
+    reservar
 }
