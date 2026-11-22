@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import Marca from "../models/Marca.js";
 import MarcaRepository from "../repository/MarcaRepository.js";
 import Validacao from "../utils/validacao.js";
 
@@ -89,11 +90,8 @@ async function create(req: Request, res: Response) {
   const { nome, pais, ativo } = req.body;
 
   try {
-    const marca = await MarcaRepository.create({
-      nome: nome.trim(),
-      pais,
-      ativo,
-    });
+    const novaMarca = new Marca(nome.trim(), pais, ativo);
+    const marca = await MarcaRepository.create(novaMarca);
 
     res.status(201).json(marca);
   } catch (error) {
@@ -142,11 +140,20 @@ async function update(
       return;
     }
 
-    const marca = await MarcaRepository.update(id, {
-      nome: nome.trim(),
-      pais,
-      ativo,
-    });
+    // so muda o que veio no corpo da requisicao
+    existe.rename(nome.trim());
+
+    if (pais !== undefined) {
+      existe.changePais(pais);
+    }
+
+    if (ativo === true) {
+      existe.activate();
+    } else if (ativo === false) {
+      existe.deactivate();
+    }
+
+    const marca = await MarcaRepository.update(id, existe);
 
     res.status(200).json(marca);
   } catch (error) {

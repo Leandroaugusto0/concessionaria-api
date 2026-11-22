@@ -1,6 +1,19 @@
 import supabase from "../config/supabase.js";
+import Marca from "../models/Marca.js";
 
-async function findAll() {
+// Converte uma linha da tabela em um objeto Marca
+function paraMarca(linha: any): Marca {
+    return Marca.restore(
+        linha.id,
+        linha.nome,
+        linha.pais,
+        linha.ativo,
+        linha.created_at,
+        linha.updated_at
+    );
+}
+
+async function findAll(): Promise<Marca[]> {
     const { data, error } = await supabase
         .from("marcas")
         .select("*");
@@ -9,10 +22,10 @@ async function findAll() {
         throw error;
     }
 
-    return data;
+    return data.map(paraMarca);
 }
 
-async function findById(id: string) {
+async function findById(id: string): Promise<Marca | null> {
     const { data, error } = await supabase
         .from("marcas")
         .select("*")
@@ -23,17 +36,17 @@ async function findById(id: string) {
         throw error;
     }
 
-    return data;
+    return data ? paraMarca(data) : null;
 }
 
-async function create(marca: {
-    nome: string;
-    pais?: string;
-    ativo?: boolean;
-}) {
+async function create(marca: Marca): Promise<Marca> {
     const { data, error } = await supabase
         .from("marcas")
-        .insert(marca)
+        .insert({
+            nome: marca.getNome(),
+            pais: marca.getPais(),
+            ativo: marca.isAtivo(),
+        })
         .select()
         .single();
 
@@ -41,18 +54,16 @@ async function create(marca: {
         throw error;
     }
 
-    return data;
+    return paraMarca(data);
 }
 
-async function update(id: string, marca: {
-    nome: string;
-    pais?: string;
-    ativo?: boolean;
-}) {
+async function update(id: string, marca: Marca): Promise<Marca> {
     const { data, error } = await supabase
         .from("marcas")
         .update({
-            ...marca,
+            nome: marca.getNome(),
+            pais: marca.getPais(),
+            ativo: marca.isAtivo(),
             updated_at: new Date().toISOString(),
         })
         .eq("id", id)
@@ -63,7 +74,7 @@ async function update(id: string, marca: {
         throw error;
     }
 
-    return data;
+    return paraMarca(data);
 }
 
 async function remove(id: string) {
