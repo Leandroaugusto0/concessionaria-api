@@ -42,5 +42,7 @@ describe("documentacao", () => {
     expect(resposta.body.components.schemas.Erro).toBeDefined();
     expect(resposta.body.paths["/marcas"]).toBeDefined();
     expect(resposta.body.paths["/marcas/{id}"].delete).toBeDefined();
+    expect(resposta.body.paths["/vendas"].post).toBeDefined();
+    expect(resposta.body.paths["/vendas/{id}"].put).toBeDefined();
   });
 });
