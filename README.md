@@ -276,7 +276,7 @@ create table vendas (
 | 201 | Registro criado com sucesso |
 | 400 | Dados invalidos, id em formato invalido ou registro relacionado inexistente (ex: `marca_id` que nao existe, veiculo que ja foi vendido) |
 | 404 | Registro ou rota nao encontrado |
-| 409 | Exclusao bloqueada porque existem registros relacionados |
+| 409 | Conflito: exclusao bloqueada porque existem registros relacionados, ou nome de marca que ja existe |
 | 500 | Erro interno do servidor |
 
 Todas as respostas de erro seguem o formato:
@@ -384,3 +384,51 @@ GET /veiculos?busca=corolla
 GET /veiculos?disponivel=true&ordenar=preco_asc
 GET /veiculos?marca_id=id-da-marca-aqui
 ```
+
+## Testes automatizados e cobertura
+
+Ferramentas: **Vitest** (testes e cobertura com `@vitest/coverage-v8`) e **Supertest** (chama as rotas da API nos testes de integracao).
+
+Organizacao dos arquivos:
+
+| Pasta | O que testa |
+|---|---|
+| `tests/unit/` | Os services e os erros proprios. O repository e trocado por um falso (`vi.mock`), entao nao usam o banco |
+| `tests/integration/` | As rotas de verdade (POST, GET, PUT, DELETE e os erros 400, 404 e 409) usando o banco do Supabase |
+| `tests/app.test.ts` | Comportamentos do app: rota inexistente, JSON invalido e documentacao swagger |
+
+Como executar:
+
+```
+npm test                 # todos os testes (unitarios e de integracao)
+npx vitest run tests/unit          # so os unitarios (nao precisam de banco)
+npx vitest run tests/integration   # so os de integracao
+npm run test:coverage    # testes + relatorio de cobertura
+```
+
+O relatorio de cobertura aparece no terminal e tambem em HTML na pasta `coverage/` (abra `coverage/index.html`). A configuracao esta em `vitest.config.ts`: o minimo exigido e **60%** de linhas, instrucoes, funcoes e branches, e o comando falha se algum ficar abaixo. Ficam de fora da medicao so o `server.ts` (que apenas sobe o servidor) e a pasta `src/config/` (conexao e configuracao); nenhuma camada com regra e excluida.
+
+Cobertura atual (com os testes de integracao): **76% das linhas, 76% das instrucoes, 89% das funcoes e 76% dos branches**.
+
+Configuracao necessaria: os testes de integracao precisam do `.env` com `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (banco com as tabelas de `database/schema.sql`). Sem o `.env` esses testes sao pulados e so os unitarios rodam.
+
+Cuidados com o banco de testes:
+
+- Os testes de integracao usam o mesmo banco da aplicacao. Todo registro que eles criam tem nome comecando com `ZZ-` e e apagado, pelo `id`, no final de cada arquivo de teste.
+- Nao rode os testes em um banco de producao. Se um teste for interrompido no meio, procure e apague os registros `ZZ-` que sobraram.
+
+No GitHub, o workflow `.github/workflows/ci.yml` roda a compilacao e os testes com cobertura a cada push. As credenciais ficam nos secrets `SUPABASE_URL` e `SUPABASE_SECRET_KEY` do repositorio.
+
+## Documentacao Swagger
+
+A documentacao interativa da API (OpenAPI 3) fica em:
+
+```
+http://localhost:3000/api-docs
+```
+
+A especificacao em JSON esta em `http://localhost:3000/api-docs.json`.
+
+Na pagina, cada rota mostra a finalidade, os parametros, o formato do corpo da requisicao, um exemplo e as respostas possiveis (200, 201, 400, 404 e 409). Para testar, clique em uma rota, depois em **Try it out**, preencha o corpo ou o `id` e clique em **Execute**: a requisicao e feita de verdade no banco.
+
+A documentacao fica nos comentarios `@openapi` de cada arquivo em `src/routes/`, ao lado das rotas que ela descreve.
