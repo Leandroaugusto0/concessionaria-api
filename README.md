@@ -19,6 +19,10 @@ Esse projeto foi desenvolvido como APS da disciplina de Back-End Development, us
 - Supabase (PostgreSQL)
 - @supabase/supabase-js (cliente do Supabase para Node)
 - tsx (executa TypeScript direto no Node em desenvolvimento)
+- Vitest e @vitest/coverage-v8 (testes e cobertura)
+- Supertest (testes de integracao das rotas)
+- Swagger/OpenAPI (swagger-jsdoc e swagger-ui-express)
+- GitHub Actions (roda os testes a cada push)
 - Git
 - HTML, CSS e JavaScript (front basico em `public/`)
 
@@ -72,23 +76,43 @@ Esse projeto foi desenvolvido como APS da disciplina de Back-End Development, us
 
 Os relacionamentos sao feitos por chave estrangeira (`marca_id`, `veiculo_id` e `cliente_id`). Por isso a API nao deixa excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas (retorna `409`).
 
-**Regra de negocio da venda:** ao registrar uma venda, o veiculo passa a ficar indisponivel (`disponivel = false`) e nao pode ser vendido de novo. Se a venda for cancelada (`status: "cancelada"`) ou excluida, o veiculo volta a ficar disponivel.
+## Regras de negocio
+
+- **Venda e disponibilidade do veiculo:** ao registrar uma venda, o veiculo passa a ficar indisponivel (`disponivel = false`) e nao pode ser vendido de novo. Se duas vendas do mesmo veiculo chegarem ao mesmo tempo, so uma e aceita, porque o veiculo e reservado numa unica consulta (`update ... where disponivel = true`).
+- **Cancelar venda:** mudar o `status` para `cancelada` devolve o veiculo ao estoque. Uma venda cancelada pode ser reativada so se o veiculo ainda estiver disponivel.
+- **Excluir venda:** se a venda ainda valia (nao estava cancelada), o veiculo volta a ficar disponivel.
+- **Venda registrada:** `veiculo_id` e `cliente_id` nao podem ser alterados. O `status` aceita `pendente`, `concluida` ou `cancelada`, e o `preco_venda` precisa ser maior que zero.
+- **Marca:** nao pode haver duas marcas com o mesmo nome (sem diferenciar maiusculas de minusculas). Retorna `409`.
+- **Exclusoes protegidas:** nao e possivel excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas. Retorna `409`.
+- **Relacionamentos:** um veiculo precisa de uma marca existente e uma venda precisa de um veiculo e um cliente existentes. Caso contrario retorna `400`.
 
 ## Estrutura do projeto
 
 ```
 src/
-├── config/       -> conexao com o supabase
-├── controller/   -> regras de cada rota (recebe a requisicao e devolve a resposta)
-├── models/       -> acesso ao banco de dados (supabase)
-├── routes/       -> definicao das rotas de cada entidade
-├── utils/        -> funcoes de validacao usadas pelos controllers
-├── app.ts        -> configuracao do express e das rotas
+├── config/       -> conexao com o supabase e configuracao do swagger
+├── controller/   -> recebe a requisicao, chama o service e devolve a resposta HTTP
+├── errors/       -> erros proprios (AppError, ValidationError, NotFoundError, ConflictError)
+├── models/       -> classes das entidades (atributos privados e comportamentos)
+├── repository/   -> acesso ao banco (todas as consultas do supabase ficam aqui)
+├── routes/       -> definicao das rotas e da documentacao swagger de cada entidade
+├── services/     -> regras de negocio e validacoes
+├── utils/        -> funcoes de validacao reutilizadas
+├── app.ts        -> configuracao do express, das rotas e do tratamento de erros
 └── server.ts     -> inicializacao do servidor
+
+tests/
+├── unit/         -> testes unitarios dos services (repository simulado com mock)
+├── integration/  -> testes das rotas com o banco de verdade (supertest)
+└── app.test.ts   -> testes do app (404, json invalido e swagger)
 
 database/         -> script sql de criacao das tabelas
 public/           -> front basico (html/css/js) pra testar a api pelo navegador
 ```
+
+O caminho de uma requisicao e: `routes` → `controller` → `service` → `repository` → Supabase.
+
+Quando uma regra e violada, o service lanca um erro proprio (`ValidationError` = 400, `NotFoundError` = 404, `ConflictError` = 409). O controller repassa o erro com `next(erro)` e o `app.ts` transforma no status e na mensagem da resposta.
 
 ## Configuração e execução
 
