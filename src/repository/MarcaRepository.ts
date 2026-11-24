@@ -39,6 +39,25 @@ async function findById(id: string): Promise<Marca | null> {
     return data ? paraMarca(data) : null;
 }
 
+// Procura uma marca pelo nome, sem diferenciar maiusculas de minusculas.
+// % e _ sao curingas do ilike, entao saem escapados.
+async function findByNome(nome: string): Promise<Marca | null> {
+    const padrao = nome.replace(/[\\%_]/g, "\\$&");
+
+    const { data, error } = await supabase
+        .from("marcas")
+        .select("*")
+        .ilike("nome", padrao)
+        .limit(1)
+        .maybeSingle();
+
+    if (error) {
+        throw error;
+    }
+
+    return data ? paraMarca(data) : null;
+}
+
 async function create(marca: Marca): Promise<Marca> {
     const { data, error } = await supabase
         .from("marcas")
@@ -91,6 +110,7 @@ async function remove(id: string) {
 export default {
     findAll,
     findById,
+    findByNome,
     create,
     update,
     remove

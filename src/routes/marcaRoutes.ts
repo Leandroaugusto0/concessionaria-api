@@ -83,6 +83,12 @@ const router = Router();
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Erro'
+ *       409:
+ *         description: Ja existe uma marca com esse nome
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
  */
 router.get("/", MarcaController.getAll);
 router.post("/", MarcaController.create);
@@ -151,6 +157,12 @@ router.post("/", MarcaController.create);
  *               $ref: '#/components/schemas/Erro'
  *       404:
  *         description: Marca nao encontrada
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Erro'
+ *       409:
+ *         description: Ja existe outra marca com esse nome
  *         content:
  *           application/json:
  *             schema:

@@ -8,6 +8,7 @@ vi.mock("../../src/repository/MarcaRepository.js", () => ({
   default: {
     findAll: vi.fn(),
     findById: vi.fn(),
+    findByNome: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     remove: vi.fn(),
@@ -78,6 +79,36 @@ describe("MarcaService", () => {
       statusCode: 400,
     });
     expect(MarcaRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("da 409 ao criar marca com nome que ja existe", async () => {
+    vi.mocked(MarcaRepository.findByNome).mockResolvedValue(marcaExemplo());
+
+    await expect(MarcaService.criar({ nome: "fiat" })).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(MarcaRepository.create).not.toHaveBeenCalled();
+  });
+
+  it("da 409 ao renomear para o nome de outra marca", async () => {
+    const outra = Marca.restore("99999999-9999-4999-8999-999999999999", "Honda", null, true);
+    vi.mocked(MarcaRepository.findById).mockResolvedValue(marcaExemplo());
+    vi.mocked(MarcaRepository.findByNome).mockResolvedValue(outra);
+
+    await expect(MarcaService.atualizar(ID, { nome: "Honda" })).rejects.toMatchObject({
+      statusCode: 409,
+    });
+    expect(MarcaRepository.update).not.toHaveBeenCalled();
+  });
+
+  it("deixa manter o proprio nome ao atualizar", async () => {
+    vi.mocked(MarcaRepository.findById).mockResolvedValue(marcaExemplo());
+    vi.mocked(MarcaRepository.findByNome).mockResolvedValue(marcaExemplo());
+    vi.mocked(MarcaRepository.update).mockImplementation(async (_id, m) => m);
+
+    const marca = await MarcaService.atualizar(ID, { nome: "Fiat", pais: "Brasil" });
+
+    expect(marca.getPais()).toBe("Brasil");
   });
 
   it("atualiza so o que foi enviado", async () => {

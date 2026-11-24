@@ -51,7 +51,14 @@ async function buscarPorId(id: string) {
 async function criar(dados: any) {
   validarDados(dados);
 
-  const marca = new Marca(dados.nome.trim(), dados.pais, dados.ativo);
+  const nome = dados.nome.trim();
+
+  // nao pode ter duas marcas com o mesmo nome
+  if (await MarcaRepository.findByNome(nome)) {
+    throw new ConflictError("Ja existe uma marca com esse nome.");
+  }
+
+  const marca = new Marca(nome, dados.pais, dados.ativo);
 
   return MarcaRepository.create(marca);
 }
@@ -66,8 +73,17 @@ async function atualizar(id: string, dados: any) {
     throw new NotFoundError("Marca nao encontrada.");
   }
 
+  const nome = dados.nome.trim();
+
+  // o nome pode repetir so se for da propria marca
+  const mesmoNome = await MarcaRepository.findByNome(nome);
+
+  if (mesmoNome && mesmoNome.getId() !== id) {
+    throw new ConflictError("Ja existe uma marca com esse nome.");
+  }
+
   // so muda o que veio no corpo da requisicao
-  marca.rename(dados.nome.trim());
+  marca.rename(nome);
 
   if (dados.pais !== undefined) {
     marca.changePais(dados.pais);
