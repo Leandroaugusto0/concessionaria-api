@@ -80,7 +80,8 @@ const router = Router();
  *           example: 2024
  *         preco:
  *           type: number
- *           exclusiveMinimum: 0
+ *           minimum: 0
+ *           exclusiveMinimum: true
  *           example: 25000
  *         km:
  *           type: integer

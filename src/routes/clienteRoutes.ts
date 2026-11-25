@@ -50,13 +50,16 @@ const router = Router();
  *         email:
  *           type: string
  *           format: email
+ *           nullable: true
  *           example: cliente@example.test
  *         telefone:
  *           type: string
  *           maxLength: 20
+ *           nullable: true
  *           example: "11999990000"
  *         cpf:
  *           type: string
+ *           nullable: true
  *           description: Aceita CPF com ou sem pontuação, contendo 11 números.
  *           example: "12345678901"
  *         ativo:
