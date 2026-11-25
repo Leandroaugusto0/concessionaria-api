@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import request from "supertest";
 
 // este teste nao acessa o banco, entao basta valores de enfeite
-process.env.SUPABASE_URL ??= "http://localhost";
-process.env.SUPABASE_SECRET_KEY ??= "chave-de-teste";
+process.env.SUPABASE_URL ||= "http://localhost";
+process.env.SUPABASE_SECRET_KEY ||= "chave-de-teste";
 
 const { default: app } = await import("../src/app.js");
 
