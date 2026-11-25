@@ -14,8 +14,8 @@ const service = vi.hoisted(() => ({
 
 vi.mock("../../src/services/ClienteService.js", () => ({ default: service }));
 
-process.env.SUPABASE_URL ??= "http://localhost";
-process.env.SUPABASE_SECRET_KEY ??= "chave-de-teste";
+process.env.SUPABASE_URL ||= "http://localhost";
+process.env.SUPABASE_SECRET_KEY ||= "chave-de-teste";
 
 const { default: app } = await import("../../src/app.js");
 const ID = "11111111-1111-4111-8111-111111111111";
