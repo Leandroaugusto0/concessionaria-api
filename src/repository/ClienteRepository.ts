@@ -1,4 +1,26 @@
 import supabase from "../config/supabase.js";
+import Cliente from "../models/Cliente.js";
+
+type ClienteDados = {
+    nome: string;
+    email?: string | null;
+    telefone?: string | null;
+    cpf?: string | null;
+    ativo?: boolean;
+};
+
+function paraCliente(linha: any): Cliente {
+    return Cliente.restore(
+        linha.id,
+        linha.nome,
+        linha.email,
+        linha.telefone,
+        linha.cpf,
+        linha.ativo,
+        linha.created_at,
+        linha.updated_at
+    );
+}
 
 async function findAll() {
     const { data, error } = await supabase
@@ -9,7 +31,7 @@ async function findAll() {
         throw error;
     }
 
-    return data;
+    return data.map(paraCliente);
 }
 
 async function findById(id: string) {
@@ -23,7 +45,7 @@ async function findById(id: string) {
         throw error;
     }
 
-    return data;
+    return data ? paraCliente(data) : null;
 }
 
 async function findAllWithCpf() {
@@ -39,13 +61,7 @@ async function findAllWithCpf() {
     return data;
 }
 
-async function create(cliente: {
-    nome: string;
-    email?: string;
-    telefone?: string;
-    cpf?: string;
-    ativo?: boolean;
-}) {
+async function create(cliente: ClienteDados): Promise<Cliente> {
     const { data, error } = await supabase
         .from("clientes")
         .insert(cliente)
@@ -56,16 +72,10 @@ async function create(cliente: {
         throw error;
     }
 
-    return data;
+    return paraCliente(data);
 }
 
-async function update(id: string, cliente: {
-    nome: string;
-    email?: string;
-    telefone?: string;
-    cpf?: string;
-    ativo?: boolean;
-}) {
+async function update(id: string, cliente: ClienteDados): Promise<Cliente> {
     const { data, error } = await supabase
         .from("clientes")
         .update({
@@ -80,7 +90,7 @@ async function update(id: string, cliente: {
         throw error;
     }
 
-    return data;
+    return paraCliente(data);
 }
 
 async function remove(id: string) {
