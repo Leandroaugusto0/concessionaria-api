@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import Venda from "../../src/models/Venda.js";
 import VendaRepository from "../../src/repository/VendaRepository.js";
-import Veiculo from "../../src/models/Veiculo.js";
+import VeiculoRepository from "../../src/repository/VeiculoRepository.js";
 import Cliente from "../../src/models/Cliente.js";
 import VendaService from "../../src/services/VendaService.js";
 
@@ -16,7 +16,7 @@ vi.mock("../../src/repository/VendaRepository.js", () => ({
   },
 }));
 
-vi.mock("../../src/models/Veiculo.js", () => ({
+vi.mock("../../src/repository/VeiculoRepository.js", () => ({
   default: {
     findById: vi.fn(),
     setDisponivel: vi.fn(),
@@ -54,9 +54,9 @@ describe("VendaService", () => {
 
   describe("criar", () => {
     beforeEach(() => {
-      vi.mocked(Veiculo.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: true });
+      vi.mocked(VeiculoRepository.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: true });
       vi.mocked(Cliente.findById).mockResolvedValue({ id: CLIENTE_ID });
-      vi.mocked(Veiculo.reservar).mockResolvedValue(true);
+      vi.mocked(VeiculoRepository.reservar).mockResolvedValue(true);
     });
 
     it("cria a venda e reserva o veiculo", async () => {
@@ -64,25 +64,25 @@ describe("VendaService", () => {
 
       expect(venda.getVendedor()).toBe("Maria");
       expect(venda.getStatus()).toBe("pendente");
-      expect(Veiculo.reservar).toHaveBeenCalledWith(VEICULO_ID);
+      expect(VeiculoRepository.reservar).toHaveBeenCalledWith(VEICULO_ID);
     });
 
     it("venda cancelada nao reserva o veiculo", async () => {
       const venda = await VendaService.criar({ ...dadosValidos, status: "cancelada" });
 
       expect(venda.isCancelada()).toBe(true);
-      expect(Veiculo.reservar).not.toHaveBeenCalled();
+      expect(VeiculoRepository.reservar).not.toHaveBeenCalled();
     });
 
     it("recusa quando o veiculo ja esta indisponivel", async () => {
-      vi.mocked(Veiculo.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: false });
+      vi.mocked(VeiculoRepository.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: false });
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
       expect(VendaRepository.create).not.toHaveBeenCalled();
     });
 
     it("recusa quando outra venda reservou o veiculo primeiro", async () => {
-      vi.mocked(Veiculo.reservar).mockResolvedValue(false);
+      vi.mocked(VeiculoRepository.reservar).mockResolvedValue(false);
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
       expect(VendaRepository.create).not.toHaveBeenCalled();
@@ -92,11 +92,11 @@ describe("VendaService", () => {
       vi.mocked(VendaRepository.create).mockRejectedValue(new Error("caiu"));
 
       await expect(VendaService.criar(dadosValidos)).rejects.toThrow("caiu");
-      expect(Veiculo.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
+      expect(VeiculoRepository.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
     });
 
     it("recusa veiculo que nao existe", async () => {
-      vi.mocked(Veiculo.findById).mockResolvedValue(null);
+      vi.mocked(VeiculoRepository.findById).mockResolvedValue(null);
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
     });
@@ -105,7 +105,7 @@ describe("VendaService", () => {
       vi.mocked(Cliente.findById).mockResolvedValue(null);
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
-      expect(Veiculo.reservar).not.toHaveBeenCalled();
+      expect(VeiculoRepository.reservar).not.toHaveBeenCalled();
     });
 
     it.each([
@@ -137,7 +137,7 @@ describe("VendaService", () => {
       expect(venda.getVendedor()).toBe("Joao");
       expect(venda.getPrecoVenda()).toBe(45000);
       expect(venda.getStatus()).toBe("pendente");
-      expect(Veiculo.setDisponivel).not.toHaveBeenCalled();
+      expect(VeiculoRepository.setDisponivel).not.toHaveBeenCalled();
     });
 
     it("conclui a venda sem mexer no veiculo", async () => {
@@ -146,7 +146,7 @@ describe("VendaService", () => {
       const venda = await VendaService.atualizar(ID, { ...dadosAtualizar, status: "concluida" });
 
       expect(venda.getStatus()).toBe("concluida");
-      expect(Veiculo.setDisponivel).not.toHaveBeenCalled();
+      expect(VeiculoRepository.setDisponivel).not.toHaveBeenCalled();
     });
 
     it("troca a forma de pagamento", async () => {
@@ -163,22 +163,22 @@ describe("VendaService", () => {
       const venda = await VendaService.atualizar(ID, { ...dadosAtualizar, status: "cancelada" });
 
       expect(venda.isCancelada()).toBe(true);
-      expect(Veiculo.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
+      expect(VeiculoRepository.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
     });
 
     it("reativar reserva o veiculo de novo", async () => {
       vi.mocked(VendaRepository.findById).mockResolvedValue(vendaExemplo("cancelada"));
-      vi.mocked(Veiculo.reservar).mockResolvedValue(true);
+      vi.mocked(VeiculoRepository.reservar).mockResolvedValue(true);
 
       const venda = await VendaService.atualizar(ID, { ...dadosAtualizar, status: "pendente" });
 
       expect(venda.getStatus()).toBe("pendente");
-      expect(Veiculo.reservar).toHaveBeenCalledWith(VEICULO_ID);
+      expect(VeiculoRepository.reservar).toHaveBeenCalledWith(VEICULO_ID);
     });
 
     it("nao reativa se o veiculo ja foi vendido para outro", async () => {
       vi.mocked(VendaRepository.findById).mockResolvedValue(vendaExemplo("cancelada"));
-      vi.mocked(Veiculo.reservar).mockResolvedValue(false);
+      vi.mocked(VeiculoRepository.reservar).mockResolvedValue(false);
 
       await expect(
         VendaService.atualizar(ID, { ...dadosAtualizar, status: "pendente" })
@@ -192,18 +192,18 @@ describe("VendaService", () => {
       const venda = await VendaService.atualizar(ID, dadosAtualizar);
 
       expect(venda.isCancelada()).toBe(true);
-      expect(Veiculo.reservar).not.toHaveBeenCalled();
+      expect(VeiculoRepository.reservar).not.toHaveBeenCalled();
     });
 
     it("libera o veiculo se a reativacao nao for gravada", async () => {
       vi.mocked(VendaRepository.findById).mockResolvedValue(vendaExemplo("cancelada"));
-      vi.mocked(Veiculo.reservar).mockResolvedValue(true);
+      vi.mocked(VeiculoRepository.reservar).mockResolvedValue(true);
       vi.mocked(VendaRepository.update).mockRejectedValue(new Error("caiu"));
 
       await expect(
         VendaService.atualizar(ID, { ...dadosAtualizar, status: "pendente" })
       ).rejects.toThrow("caiu");
-      expect(Veiculo.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
+      expect(VeiculoRepository.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
     });
 
     it("da 404 quando a venda nao existe", async () => {
@@ -229,7 +229,7 @@ describe("VendaService", () => {
       await VendaService.remover(ID);
 
       expect(VendaRepository.remove).toHaveBeenCalledWith(ID);
-      expect(Veiculo.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
+      expect(VeiculoRepository.setDisponivel).toHaveBeenCalledWith(VEICULO_ID, true);
     });
 
     it("remove venda cancelada sem mexer no veiculo", async () => {
@@ -238,7 +238,7 @@ describe("VendaService", () => {
       await VendaService.remover(ID);
 
       expect(VendaRepository.remove).toHaveBeenCalledWith(ID);
-      expect(Veiculo.setDisponivel).not.toHaveBeenCalled();
+      expect(VeiculoRepository.setDisponivel).not.toHaveBeenCalled();
     });
 
     it("da 404 quando a venda nao existe", async () => {

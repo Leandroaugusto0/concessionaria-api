@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import Veiculo from "../models/Veiculo.js";
+import VeiculoRepository from "../repository/VeiculoRepository.js";
 import MarcaRepository from "../repository/MarcaRepository.js";
 import Validacao from "../utils/validacao.js";
 
@@ -82,7 +82,7 @@ async function getAll(req: Request, res: Response) {
   }
 
   try {
-    const veiculos = await Veiculo.findAll({
+    const veiculos = await VeiculoRepository.findAll({
       marca_id: marca_id as string | undefined,
       disponivel:
         disponivel === undefined ? undefined : disponivel === "true",
@@ -115,7 +115,7 @@ async function getById(
   }
 
   try {
-    const veiculo = await Veiculo.findById(id);
+    const veiculo = await VeiculoRepository.findById(id);
 
     if (!veiculo) {
       res.status(404).json({
@@ -169,7 +169,7 @@ async function create(req: Request, res: Response) {
       return;
     }
 
-    const veiculo = await Veiculo.create({
+    const veiculo = await VeiculoRepository.create({
       marca_id,
       modelo: modelo.trim(),
       ano,
@@ -228,7 +228,7 @@ async function update(
   } = req.body;
 
   try {
-    const existe = await Veiculo.findById(id);
+    const existe = await VeiculoRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -248,7 +248,7 @@ async function update(
       return;
     }
 
-    const veiculo = await Veiculo.update(id, {
+    const veiculo = await VeiculoRepository.update(id, {
       marca_id,
       modelo: modelo.trim(),
       ano,
@@ -285,7 +285,7 @@ async function remove(
   }
 
   try {
-    const existe = await Veiculo.findById(id);
+    const existe = await VeiculoRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -295,7 +295,7 @@ async function remove(
       return;
     }
 
-    await Veiculo.remove(id);
+    await VeiculoRepository.remove(id);
 
     res.status(200).json({
       message: "Veiculo removido com sucesso.",
