@@ -83,7 +83,7 @@ async function criar(dados: any) {
   }
 
   // um veiculo so pode ser vendido se ainda estiver disponivel
-  if (!veiculo.disponivel) {
+  if (!veiculo.isDisponivel()) {
     throw new ValidationError("O veiculo informado nao esta disponivel para venda.");
   }
 

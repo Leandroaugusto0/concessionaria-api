@@ -1,4 +1,23 @@
 import supabase from "../config/supabase.js";
+import Veiculo from "../models/Veiculo.js";
+
+function paraVeiculo(linha: any): Veiculo {
+    return Veiculo.restore(
+        linha.id,
+        linha.marca_id,
+        linha.modelo,
+        linha.ano,
+        Number(linha.preco),
+        linha.km,
+        linha.combustivel,
+        linha.cor,
+        linha.disponivel,
+        linha.ativo,
+        linha.created_at,
+        linha.updated_at,
+        linha.marcas
+    );
+}
 
 async function findAll(filtros?: {
     marca_id?: string;
@@ -34,7 +53,7 @@ async function findAll(filtros?: {
         throw error;
     }
 
-    return data;
+    return data.map(paraVeiculo);
 }
 
 async function findById(id: string) {
@@ -48,7 +67,7 @@ async function findById(id: string) {
         throw error;
     }
 
-    return data;
+    return data ? paraVeiculo(data) : null;
 }
 
 async function create(veiculo: {
@@ -72,7 +91,7 @@ async function create(veiculo: {
         throw error;
     }
 
-    return data;
+    return paraVeiculo(data);
 }
 
 async function update(id: string, veiculo: {
@@ -100,7 +119,7 @@ async function update(id: string, veiculo: {
         throw error;
     }
 
-    return data;
+    return paraVeiculo(data);
 }
 
 // Marca o veiculo como disponivel ou indisponivel (usado quando uma venda e registrada, cancelada ou removida)

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import Venda from "../../src/models/Venda.js";
 import VendaRepository from "../../src/repository/VendaRepository.js";
 import VeiculoRepository from "../../src/repository/VeiculoRepository.js";
+import Veiculo from "../../src/models/Veiculo.js";
 import Cliente from "../../src/models/Cliente.js";
 import VendaService from "../../src/services/VendaService.js";
 
@@ -45,6 +46,21 @@ function vendaExemplo(status: "pendente" | "concluida" | "cancelada" = "pendente
   return Venda.restore(ID, VEICULO_ID, CLIENTE_ID, "Maria", 50000, null, status);
 }
 
+function veiculoExemplo(disponivel = true) {
+  return Veiculo.restore(
+    VEICULO_ID,
+    "44444444-4444-4444-8444-444444444444",
+    "ZZ-Veiculo de teste",
+    2024,
+    50000,
+    0,
+    null,
+    null,
+    disponivel,
+    true,
+  );
+}
+
 describe("VendaService", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -54,7 +70,7 @@ describe("VendaService", () => {
 
   describe("criar", () => {
     beforeEach(() => {
-      vi.mocked(VeiculoRepository.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: true });
+      vi.mocked(VeiculoRepository.findById).mockResolvedValue(veiculoExemplo(true));
       vi.mocked(Cliente.findById).mockResolvedValue({ id: CLIENTE_ID });
       vi.mocked(VeiculoRepository.reservar).mockResolvedValue(true);
     });
@@ -75,7 +91,7 @@ describe("VendaService", () => {
     });
 
     it("recusa quando o veiculo ja esta indisponivel", async () => {
-      vi.mocked(VeiculoRepository.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: false });
+      vi.mocked(VeiculoRepository.findById).mockResolvedValue(veiculoExemplo(false));
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
       expect(VendaRepository.create).not.toHaveBeenCalled();
