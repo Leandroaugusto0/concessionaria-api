@@ -26,6 +26,19 @@ async function findById(id: string) {
     return data;
 }
 
+async function findAllWithCpf() {
+    const { data, error } = await supabase
+        .from("clientes")
+        .select("id, cpf")
+        .not("cpf", "is", null);
+
+    if (error) {
+        throw error;
+    }
+
+    return data;
+}
+
 async function create(cliente: {
     nome: string;
     email?: string;
@@ -84,6 +97,7 @@ async function remove(id: string) {
 export default {
     findAll,
     findById,
+    findAllWithCpf,
     create,
     update,
     remove

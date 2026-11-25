@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import Cliente from "../models/Cliente.js";
+import ClienteRepository from "../repository/ClienteRepository.js";
 import Validacao from "../utils/validacao.js";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -47,7 +47,7 @@ function validarCliente(body: any): string | null {
 
 async function getAll(req: Request, res: Response) {
   try {
-    const clientes = await Cliente.findAll();
+    const clientes = await ClienteRepository.findAll();
 
     res.status(200).json(clientes);
   } catch (error) {
@@ -74,7 +74,7 @@ async function getById(
   }
 
   try {
-    const cliente = await Cliente.findById(id);
+    const cliente = await ClienteRepository.findById(id);
 
     if (!cliente) {
       res.status(404).json({
@@ -108,7 +108,7 @@ async function create(req: Request, res: Response) {
   const { nome, email, telefone, cpf, ativo } = req.body;
 
   try {
-    const cliente = await Cliente.create({
+    const cliente = await ClienteRepository.create({
       nome: nome.trim(),
       email,
       telefone,
@@ -153,7 +153,7 @@ async function update(
   const { nome, email, telefone, cpf, ativo } = req.body;
 
   try {
-    const existe = await Cliente.findById(id);
+    const existe = await ClienteRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -163,7 +163,7 @@ async function update(
       return;
     }
 
-    const cliente = await Cliente.update(id, {
+    const cliente = await ClienteRepository.update(id, {
       nome: nome.trim(),
       email,
       telefone,
@@ -196,7 +196,7 @@ async function remove(
   }
 
   try {
-    const existe = await Cliente.findById(id);
+    const existe = await ClienteRepository.findById(id);
 
     if (!existe) {
       res.status(404).json({
@@ -206,7 +206,7 @@ async function remove(
       return;
     }
 
-    await Cliente.remove(id);
+    await ClienteRepository.remove(id);
 
     res.status(200).json({
       message: "Cliente removido com sucesso.",
