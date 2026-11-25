@@ -1,6 +1,34 @@
 import supabase from "../config/supabase.js";
 import Veiculo from "../models/Veiculo.js";
 
+type VeiculoDados = {
+    marca_id: string;
+    modelo: string;
+    ano: number;
+    preco: number;
+    km?: number;
+    combustivel?: string | null;
+    cor?: string | null;
+    disponivel?: boolean;
+    ativo?: boolean;
+};
+
+function dadosParaBanco(veiculo: Veiculo | VeiculoDados): VeiculoDados {
+    if (!(veiculo instanceof Veiculo)) return veiculo;
+
+    return {
+        marca_id: veiculo.getMarcaId(),
+        modelo: veiculo.getModelo(),
+        ano: veiculo.getAno(),
+        preco: veiculo.getPreco(),
+        km: veiculo.getKm(),
+        combustivel: veiculo.getCombustivel(),
+        cor: veiculo.getCor(),
+        disponivel: veiculo.isDisponivel(),
+        ativo: veiculo.isAtivo(),
+    };
+}
+
 function paraVeiculo(linha: any): Veiculo {
     return Veiculo.restore(
         linha.id,
@@ -70,20 +98,10 @@ async function findById(id: string) {
     return data ? paraVeiculo(data) : null;
 }
 
-async function create(veiculo: {
-    marca_id: string;
-    modelo: string;
-    ano: number;
-    preco: number;
-    km?: number;
-    combustivel?: string;
-    cor?: string;
-    disponivel?: boolean;
-    ativo?: boolean;
-}) {
+async function create(veiculo: Veiculo | VeiculoDados): Promise<Veiculo> {
     const { data, error } = await supabase
         .from("veiculos")
-        .insert(veiculo)
+        .insert(dadosParaBanco(veiculo))
         .select()
         .single();
 
@@ -94,21 +112,11 @@ async function create(veiculo: {
     return paraVeiculo(data);
 }
 
-async function update(id: string, veiculo: {
-    marca_id: string;
-    modelo: string;
-    ano: number;
-    preco: number;
-    km?: number;
-    combustivel?: string;
-    cor?: string;
-    disponivel?: boolean;
-    ativo?: boolean;
-}) {
+async function update(id: string, veiculo: Veiculo | VeiculoDados): Promise<Veiculo> {
     const { data, error } = await supabase
         .from("veiculos")
         .update({
-            ...veiculo,
+            ...dadosParaBanco(veiculo),
             updated_at: new Date().toISOString(),
         })
         .eq("id", id)
