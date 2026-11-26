@@ -83,6 +83,8 @@ Os relacionamentos sao feitos por chave estrangeira (`marca_id`, `veiculo_id` e 
 - **Excluir venda:** se a venda ainda valia (nao estava cancelada), o veiculo volta a ficar disponivel.
 - **Venda registrada:** `veiculo_id` e `cliente_id` nao podem ser alterados. O `status` aceita `pendente`, `concluida` ou `cancelada`, e o `preco_venda` precisa ser maior que zero.
 - **Marca:** nao pode haver duas marcas com o mesmo nome (sem diferenciar maiusculas de minusculas). Retorna `409`.
+- **Cliente:** nao pode haver dois clientes com o mesmo CPF (com ou sem pontuacao). Retorna `409`. Quando informado, o CPF precisa ter 11 numeros e o email precisa ter formato valido.
+- **Veiculo:** o `ano` precisa estar entre 1950 e o ano que vem, o `preco` precisa ser maior que zero e o `km` nao pode ser negativo.
 - **Exclusoes protegidas:** nao e possivel excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas. Retorna `409`.
 - **Relacionamentos:** um veiculo precisa de uma marca existente e uma venda precisa de um veiculo e um cliente existentes. Caso contrario retorna `400`.
 
@@ -102,7 +104,7 @@ src/
 └── server.ts     -> inicializacao do servidor
 
 tests/
-├── unit/         -> testes unitarios dos services (repository simulado com mock)
+├── unit/         -> testes unitarios de services, controllers, repositories e erros (com mock)
 ├── integration/  -> testes das rotas com o banco de verdade (supertest)
 └── app.test.ts   -> testes do app (404, json invalido e swagger)
 
@@ -393,7 +395,7 @@ Organizacao dos arquivos:
 
 | Pasta | O que testa |
 |---|---|
-| `tests/unit/` | Os services e os erros proprios. O repository e trocado por um falso (`vi.mock`), entao nao usam o banco |
+| `tests/unit/` | Services, controllers, repositories e erros proprios. A camada de baixo e trocada por uma falsa (`vi.mock`), entao nao usam o banco |
 | `tests/integration/` | As rotas de verdade (POST, GET, PUT, DELETE e os erros 400, 404 e 409) usando o banco do Supabase |
 | `tests/app.test.ts` | Comportamentos do app: rota inexistente, JSON invalido e documentacao swagger |
 
@@ -408,7 +410,12 @@ npm run test:coverage    # testes + relatorio de cobertura
 
 O relatorio de cobertura aparece no terminal e tambem em HTML na pasta `coverage/` (abra `coverage/index.html`). A configuracao esta em `vitest.config.ts`: o minimo exigido e **60%** de linhas, instrucoes, funcoes e branches, e o comando falha se algum ficar abaixo. Ficam de fora da medicao so o `server.ts` (que apenas sobe o servidor) e a pasta `src/config/` (conexao e configuracao); nenhuma camada com regra e excluida.
 
-Cobertura atual (com os testes de integracao): **76% das linhas, 76% das instrucoes, 89% das funcoes e 76% dos branches**.
+Cobertura atual:
+
+| Execucao | Linhas | Instrucoes | Funcoes | Branches |
+|---|---|---|---|---|
+| Todos os testes (com banco) | 90% | 90% | 92% | 92% |
+| So os unitarios (sem `.env`) | 84% | 83% | 80% | 86% |
 
 Configuracao necessaria: os testes de integracao precisam do `.env` com `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (banco com as tabelas de `database/schema.sql`). Sem o `.env` esses testes sao pulados e so os unitarios rodam.
 
