@@ -83,6 +83,8 @@ Os relacionamentos sao feitos por chave estrangeira (`marca_id`, `veiculo_id` e 
 - **Excluir venda:** se a venda ainda valia (nao estava cancelada), o veiculo volta a ficar disponivel.
 - **Venda registrada:** `veiculo_id` e `cliente_id` nao podem ser alterados. O `status` aceita `pendente`, `concluida` ou `cancelada`, e o `preco_venda` precisa ser maior que zero.
 - **Marca:** nao pode haver duas marcas com o mesmo nome (sem diferenciar maiusculas de minusculas). Retorna `409`.
+- **Cliente:** o nome e obrigatorio (ate 150 caracteres). Email, telefone, CPF e ativo sao opcionais; email deve ter formato valido, telefone aceita ate 20 caracteres e CPF deve conter 11 numeros, com ou sem pontuacao. Quando preenchido, o CPF nao pode estar cadastrado em outro cliente; a API retorna `409`.
+- **Veiculo:** `marca_id`, `modelo`, `ano` e `preco` sao obrigatorios. A marca precisa existir (`400`), o modelo aceita ate 150 caracteres, o ano deve estar entre 1950 e o ano atual mais um, e o preco deve ser maior que zero. `km`, quando informado, deve ser um inteiro maior ou igual a zero.
 - **Exclusoes protegidas:** nao e possivel excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas. Retorna `409`.
 - **Relacionamentos:** um veiculo precisa de uma marca existente e uma venda precisa de um veiculo e um cliente existentes. Caso contrario retorna `400`.
 
@@ -248,6 +250,8 @@ create table vendas (
 | PUT | /veiculos/:id | Atualiza um veiculo |
 | DELETE | /veiculos/:id | Remove um veiculo |
 
+No `POST` e no `PUT` de veiculos, envie `marca_id`, `modelo`, `ano` e `preco`; `km`, `combustivel`, `cor`, `disponivel` e `ativo` sao opcionais.
+
 ### Clientes
 
 | Metodo | Endpoint | Descrição |
@@ -257,6 +261,8 @@ create table vendas (
 | POST | /clientes | Cadastra um novo cliente |
 | PUT | /clientes/:id | Atualiza um cliente |
 | DELETE | /clientes/:id | Remove um cliente |
+
+No `POST` e no `PUT`, `nome` e obrigatorio. `email`, `telefone`, `cpf` e `ativo` podem ser omitidos. O CPF pode ser enviado com ou sem pontuacao.
 
 ### Vendas
 
@@ -301,22 +307,22 @@ Todas as respostas de erro seguem o formato:
 ```json
 {
   "marca_id": "id-da-marca-aqui",
-  "modelo": "Corolla",
+  "modelo": "ZZ-Modelo de exemplo",
   "ano": 2023,
-  "preco": 145000.00,
-  "km": 12000,
+  "preco": 25000.00,
+  "km": 0,
   "combustivel": "Flex",
-  "cor": "Prata"
+  "cor": "Azul"
 }
 ```
 
 **POST /clientes**
 ```json
 {
-  "nome": "Maria da Silva",
-  "email": "maria@email.com",
-  "telefone": "(11) 99999-0000",
-  "cpf": "123.456.789-00"
+  "nome": "ZZ-Cliente de exemplo",
+  "email": "cliente@example.test",
+  "telefone": "00000000000",
+  "cpf": "00000000000"
 }
 ```
 
@@ -344,12 +350,12 @@ Todas as respostas de erro seguem o formato:
 ```json
 {
   "marca_id": "id-da-marca-aqui",
-  "modelo": "Corolla XEi",
+  "modelo": "ZZ-Modelo atualizado",
   "ano": 2023,
-  "preco": 139900.00,
-  "km": 15000,
+  "preco": 24000.00,
+  "km": 100,
   "combustivel": "Flex",
-  "cor": "Prata",
+  "cor": "Preto",
   "disponivel": false,
   "ativo": true
 }
@@ -358,10 +364,10 @@ Todas as respostas de erro seguem o formato:
 **PUT /clientes/:id**
 ```json
 {
-  "nome": "Maria da Silva Santos",
-  "email": "maria.santos@email.com",
-  "telefone": "(11) 98888-0000",
-  "cpf": "123.456.789-00",
+  "nome": "ZZ-Cliente atualizado",
+  "email": "cliente.atualizado@example.test",
+  "telefone": "00000000000",
+  "cpf": "00000000000",
   "ativo": true
 }
 ```
