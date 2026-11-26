@@ -1,7 +1,7 @@
 import Venda from "../models/Venda.js";
 import VendaRepository from "../repository/VendaRepository.js";
 import Veiculo from "../models/Veiculo.js";
-import Cliente from "../models/Cliente.js";
+import ClienteRepository from "../repository/ClienteRepository.js";
 import Validacao from "../utils/validacao.js";
 import ValidationError from "../errors/ValidationError.js";
 import NotFoundError from "../errors/NotFoundError.js";
@@ -87,7 +87,7 @@ async function criar(dados: any) {
     throw new ValidationError("O veiculo informado nao esta disponivel para venda.");
   }
 
-  const cliente = await Cliente.findById(cliente_id);
+  const cliente = await ClienteRepository.findById(cliente_id);
 
   if (!cliente) {
     throw new ValidationError("O cliente informado nao existe.");

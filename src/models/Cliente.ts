@@ -1,90 +1,66 @@
-import supabase from "../config/supabase.js";
+// Representa um cliente da concessionária.
+export default class Cliente {
+  private id?: string;
+  private nome: string;
+  private email: string | null;
+  private telefone: string | null;
+  private cpf: string | null;
+  private ativo: boolean;
+  private createdAt?: string | null;
+  private updatedAt?: string | null;
 
-async function findAll() {
-    const { data, error } = await supabase
-        .from("clientes")
-        .select("*");
+  constructor(
+    nome: string,
+    email?: string | null,
+    telefone?: string | null,
+    cpf?: string | null,
+    ativo: boolean = true,
+  ) {
+    this.nome = nome;
+    this.email = email ?? null;
+    this.telefone = telefone ?? null;
+    this.cpf = cpf ?? null;
+    this.ativo = ativo;
+  }
 
-    if (error) {
-        throw error;
-    }
+  static restore(
+    id: string,
+    nome: string,
+    email: string | null,
+    telefone: string | null,
+    cpf: string | null,
+    ativo: boolean,
+    createdAt?: string | null,
+    updatedAt?: string | null,
+  ): Cliente {
+    const cliente = new Cliente(nome, email, telefone, cpf, ativo);
+    cliente.id = id;
+    cliente.createdAt = createdAt;
+    cliente.updatedAt = updatedAt;
+    return cliente;
+  }
 
-    return data;
-}
+  getId(): string | undefined { return this.id; }
+  getNome(): string { return this.nome; }
+  getEmail(): string | null { return this.email; }
+  getTelefone(): string | null { return this.telefone; }
+  getCpf(): string | null { return this.cpf; }
+  isAtivo(): boolean { return this.ativo; }
 
-async function findById(id: string) {
-    const { data, error } = await supabase
-        .from("clientes")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+  activate(): void { this.ativo = true; }
+  deactivate(): void { this.ativo = false; }
 
-    if (error) {
-        throw error;
-    }
-
-    return data;
-}
-
-async function create(cliente: {
-    nome: string;
-    email?: string;
-    telefone?: string;
-    cpf?: string;
-    ativo?: boolean;
-}) {
-    const { data, error } = await supabase
-        .from("clientes")
-        .insert(cliente)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
-}
-
-async function update(id: string, cliente: {
-    nome: string;
-    email?: string;
-    telefone?: string;
-    cpf?: string;
-    ativo?: boolean;
-}) {
-    const { data, error } = await supabase
-        .from("clientes")
-        .update({
-            ...cliente,
-            updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
-}
-
-async function remove(id: string) {
-    const { error } = await supabase
-        .from("clientes")
-        .delete()
-        .eq("id", id);
-
-    if (error) {
-        throw error;
-    }
-}
-
-export default {
-    findAll,
-    findById,
-    create,
-    update,
-    remove
+  // Mantém o formato original retornado pela API e pelas colunas do Supabase.
+  toJSON() {
+    return {
+      id: this.id,
+      nome: this.nome,
+      email: this.email,
+      telefone: this.telefone,
+      cpf: this.cpf,
+      ativo: this.ativo,
+      created_at: this.createdAt,
+      updated_at: this.updatedAt,
+    };
+  }
 }

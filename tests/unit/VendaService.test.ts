@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import Venda from "../../src/models/Venda.js";
 import VendaRepository from "../../src/repository/VendaRepository.js";
 import Veiculo from "../../src/models/Veiculo.js";
-import Cliente from "../../src/models/Cliente.js";
+import ClienteRepository from "../../src/repository/ClienteRepository.js";
 import VendaService from "../../src/services/VendaService.js";
 
 // repository, veiculo e cliente sao trocados por falsos, entao nao usa o banco
@@ -24,9 +24,10 @@ vi.mock("../../src/models/Veiculo.js", () => ({
   },
 }));
 
-vi.mock("../../src/models/Cliente.js", () => ({
+vi.mock("../../src/repository/ClienteRepository.js", () => ({
   default: {
     findById: vi.fn(),
+    findAllWithCpf: vi.fn(),
   },
 }));
 
@@ -55,7 +56,7 @@ describe("VendaService", () => {
   describe("criar", () => {
     beforeEach(() => {
       vi.mocked(Veiculo.findById).mockResolvedValue({ id: VEICULO_ID, disponivel: true });
-      vi.mocked(Cliente.findById).mockResolvedValue({ id: CLIENTE_ID });
+      vi.mocked(ClienteRepository.findById).mockResolvedValue({ id: CLIENTE_ID });
       vi.mocked(Veiculo.reservar).mockResolvedValue(true);
     });
 
@@ -102,7 +103,7 @@ describe("VendaService", () => {
     });
 
     it("recusa cliente que nao existe", async () => {
-      vi.mocked(Cliente.findById).mockResolvedValue(null);
+      vi.mocked(ClienteRepository.findById).mockResolvedValue(null);
 
       await expect(VendaService.criar(dadosValidos)).rejects.toMatchObject({ statusCode: 400 });
       expect(Veiculo.reservar).not.toHaveBeenCalled();
