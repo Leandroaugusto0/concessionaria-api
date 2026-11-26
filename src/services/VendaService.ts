@@ -1,6 +1,6 @@
 import Venda from "../models/Venda.js";
 import VendaRepository from "../repository/VendaRepository.js";
-import Veiculo from "../models/Veiculo.js";
+import VeiculoRepository from "../repository/VeiculoRepository.js";
 import ClienteRepository from "../repository/ClienteRepository.js";
 import Validacao from "../utils/validacao.js";
 import ValidationError from "../errors/ValidationError.js";
@@ -76,14 +76,14 @@ async function criar(dados: any) {
 
   validarDados(dados);
 
-  const veiculo = await Veiculo.findById(veiculo_id);
+  const veiculo = await VeiculoRepository.findById(veiculo_id);
 
   if (!veiculo) {
     throw new ValidationError("O veiculo informado nao existe.");
   }
 
   // um veiculo so pode ser vendido se ainda estiver disponivel
-  if (!veiculo.disponivel) {
+  if (!veiculo.isDisponivel()) {
     throw new ValidationError("O veiculo informado nao esta disponivel para venda.");
   }
 
@@ -109,7 +109,7 @@ async function criar(dados: any) {
 
   // reserva o veiculo antes de gravar a venda. Se duas vendas chegarem
   // juntas, so uma consegue reservar
-  const reservou = await Veiculo.reservar(veiculo_id);
+  const reservou = await VeiculoRepository.reservar(veiculo_id);
 
   if (!reservou) {
     throw new ValidationError("O veiculo informado nao esta disponivel para venda.");
@@ -119,7 +119,7 @@ async function criar(dados: any) {
     return await VendaRepository.create(venda);
   } catch (error) {
     // a venda nao foi gravada, entao o veiculo volta para o estoque
-    await Veiculo.setDisponivel(veiculo_id, true);
+    await VeiculoRepository.setDisponivel(veiculo_id, true);
 
     throw error;
   }
@@ -142,7 +142,7 @@ async function atualizar(id: string, dados: any) {
 
   // se a venda cancelada for reativada, o veiculo precisa estar livre
   if (reativando) {
-    const reservou = await Veiculo.reservar(venda.getVeiculoId());
+    const reservou = await VeiculoRepository.reservar(venda.getVeiculoId());
 
     if (!reservou) {
       throw new ValidationError(
@@ -174,7 +174,7 @@ async function atualizar(id: string, dados: any) {
   } catch (error) {
     // a reativacao nao foi gravada, entao o veiculo volta como estava
     if (reativando) {
-      await Veiculo.setDisponivel(venda.getVeiculoId(), true);
+      await VeiculoRepository.setDisponivel(venda.getVeiculoId(), true);
     }
 
     throw error;
@@ -182,7 +182,7 @@ async function atualizar(id: string, dados: any) {
 
   // venda cancelada devolve o veiculo para o estoque
   if (cancelando) {
-    await Veiculo.setDisponivel(venda.getVeiculoId(), true);
+    await VeiculoRepository.setDisponivel(venda.getVeiculoId(), true);
   }
 
   return atualizada;
@@ -201,7 +201,7 @@ async function remover(id: string) {
 
   // se a venda ainda valia, o veiculo volta a ficar disponivel
   if (!venda.isCancelada()) {
-    await Veiculo.setDisponivel(venda.getVeiculoId(), true);
+    await VeiculoRepository.setDisponivel(venda.getVeiculoId(), true);
   }
 }
 

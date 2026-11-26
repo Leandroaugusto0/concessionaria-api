@@ -1,161 +1,119 @@
-import supabase from "../config/supabase.js";
-
-async function findAll(filtros?: {
-    marca_id?: string;
-    disponivel?: boolean;
-    busca?: string;
-    ordenar?: string;
-}) {
-    let query = supabase
-        .from("veiculos")
-        .select("*, marcas(id, nome)");
-
-    if (filtros?.marca_id) {
-        query = query.eq("marca_id", filtros.marca_id);
-    }
-
-    if (filtros?.disponivel !== undefined) {
-        query = query.eq("disponivel", filtros.disponivel);
-    }
-
-    if (filtros?.busca) {
-        query = query.ilike("modelo", `%${filtros.busca}%`);
-    }
-
-    if (filtros?.ordenar === "preco_asc") {
-        query = query.order("preco", { ascending: true });
-    } else if (filtros?.ordenar === "preco_desc") {
-        query = query.order("preco", { ascending: false });
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
+export interface MarcaResumo {
+  id: string;
+  nome: string;
 }
 
-async function findById(id: string) {
-    const { data, error } = await supabase
-        .from("veiculos")
-        .select("*, marcas(id, nome)")
-        .eq("id", id)
-        .maybeSingle();
+// Representa um veículo do estoque da concessionária.
+export default class Veiculo {
+  private id?: string;
+  private marcaId: string;
+  private modelo: string;
+  private ano: number;
+  private preco: number;
+  private km: number;
+  private combustivel: string | null;
+  private cor: string | null;
+  private disponivel: boolean;
+  private ativo: boolean;
+  private createdAt?: string | null;
+  private updatedAt?: string | null;
+  private marca?: MarcaResumo | null;
 
-    if (error) {
-        throw error;
-    }
+  constructor(
+    marcaId: string,
+    modelo: string,
+    ano: number,
+    preco: number,
+    km: number = 0,
+    combustivel?: string | null,
+    cor?: string | null,
+    disponivel: boolean = true,
+    ativo: boolean = true,
+  ) {
+    this.marcaId = marcaId;
+    this.modelo = modelo;
+    this.ano = ano;
+    this.preco = preco;
+    this.km = km;
+    this.combustivel = combustivel ?? null;
+    this.cor = cor ?? null;
+    this.disponivel = disponivel;
+    this.ativo = ativo;
+  }
 
-    return data;
-}
+  static restore(
+    id: string,
+    marcaId: string,
+    modelo: string,
+    ano: number,
+    preco: number,
+    km: number,
+    combustivel: string | null,
+    cor: string | null,
+    disponivel: boolean,
+    ativo: boolean,
+    createdAt?: string | null,
+    updatedAt?: string | null,
+    marca?: MarcaResumo | null,
+  ): Veiculo {
+    const veiculo = new Veiculo(
+      marcaId,
+      modelo,
+      ano,
+      preco,
+      km,
+      combustivel,
+      cor,
+      disponivel,
+      ativo,
+    );
+    veiculo.id = id;
+    veiculo.createdAt = createdAt;
+    veiculo.updatedAt = updatedAt;
+    veiculo.marca = marca;
+    return veiculo;
+  }
 
-async function create(veiculo: {
-    marca_id: string;
-    modelo: string;
-    ano: number;
-    preco: number;
-    km?: number;
-    combustivel?: string;
-    cor?: string;
-    disponivel?: boolean;
-    ativo?: boolean;
-}) {
-    const { data, error } = await supabase
-        .from("veiculos")
-        .insert(veiculo)
-        .select()
-        .single();
+  getId(): string | undefined { return this.id; }
+  getMarcaId(): string { return this.marcaId; }
+  getModelo(): string { return this.modelo; }
+  getAno(): number { return this.ano; }
+  getPreco(): number { return this.preco; }
+  getKm(): number { return this.km; }
+  getCombustivel(): string | null { return this.combustivel; }
+  getCor(): string | null { return this.cor; }
+  isDisponivel(): boolean { return this.disponivel; }
+  isAtivo(): boolean { return this.ativo; }
 
-    if (error) {
-        throw error;
-    }
+  rename(modelo: string): void { this.modelo = modelo; }
+  changeMarca(marcaId: string): void { this.marcaId = marcaId; }
+  changeAno(ano: number): void { this.ano = ano; }
+  changePreco(preco: number): void { this.preco = preco; }
+  changeKm(km: number): void { this.km = km; }
+  changeCombustivel(combustivel: string | null): void { this.combustivel = combustivel; }
+  changeCor(cor: string | null): void { this.cor = cor; }
 
-    return data;
-}
+  markAvailable(): void { this.disponivel = true; }
+  markUnavailable(): void { this.disponivel = false; }
+  activate(): void { this.ativo = true; }
+  deactivate(): void { this.ativo = false; }
 
-async function update(id: string, veiculo: {
-    marca_id: string;
-    modelo: string;
-    ano: number;
-    preco: number;
-    km?: number;
-    combustivel?: string;
-    cor?: string;
-    disponivel?: boolean;
-    ativo?: boolean;
-}) {
-    const { data, error } = await supabase
-        .from("veiculos")
-        .update({
-            ...veiculo,
-            updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select()
-        .single();
-
-    if (error) {
-        throw error;
-    }
-
-    return data;
-}
-
-// Marca o veiculo como disponivel ou indisponivel (usado quando uma venda e registrada, cancelada ou removida)
-async function setDisponivel(id: string, disponivel: boolean) {
-    const { error } = await supabase
-        .from("veiculos")
-        .update({
-            disponivel,
-            updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-
-    if (error) {
-        throw error;
-    }
-}
-
-// Reserva o veiculo para uma venda: so marca como indisponivel se ele ainda estiver disponivel.
-// E uma consulta so, entao duas vendas ao mesmo tempo nao conseguem pegar o mesmo carro.
-// Retorna false se alguem ja tinha reservado.
-async function reservar(id: string): Promise<boolean> {
-    const { data, error } = await supabase
-        .from("veiculos")
-        .update({
-            disponivel: false,
-            updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .eq("disponivel", true)
-        .select("id");
-
-    if (error) {
-        throw error;
-    }
-
-    return data.length > 0;
-}
-
-async function remove(id: string) {
-    const { error } = await supabase
-        .from("veiculos")
-        .delete()
-        .eq("id", id);
-
-    if (error) {
-        throw error;
-    }
-}
-
-export default {
-    findAll,
-    findById,
-    create,
-    update,
-    remove,
-    setDisponivel,
-    reservar
+  // Mantém os nomes das colunas e o relacionamento usados pela API.
+  toJSON() {
+    return {
+      id: this.id,
+      marca_id: this.marcaId,
+      modelo: this.modelo,
+      ano: this.ano,
+      preco: this.preco,
+      km: this.km,
+      combustivel: this.combustivel,
+      cor: this.cor,
+      disponivel: this.disponivel,
+      ativo: this.ativo,
+      created_at: this.createdAt,
+      updated_at: this.updatedAt,
+      marcas: this.marca,
+    };
+  }
 }
