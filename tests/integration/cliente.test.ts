@@ -65,6 +65,17 @@ describe.skipIf(!supabaseConfigurado)("integração de clientes (Supabase)", () 
     expect(lista.body.some((cliente: { id: string }) => cliente.id === criado.body.id)).toBe(true);
   });
 
+  it("busca um cliente pelo id", async () => {
+    const criado = await request(app).post("/clientes").send(clienteValido("ZZ-Cliente Busca"));
+    expect(criado.status).toBe(201);
+    clienteIds.push(criado.body.id);
+
+    const resposta = await request(app).get(`/clientes/${criado.body.id}`);
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.id).toBe(criado.body.id);
+    expect(resposta.body.nome).toBe("ZZ-Cliente Busca");
+  });
+
   it("atualiza e exclui um cliente sem vínculos", async () => {
     const criado = await request(app).post("/clientes").send(clienteValido("ZZ-Cliente Para Atualizar"));
     expect(criado.status).toBe(201);

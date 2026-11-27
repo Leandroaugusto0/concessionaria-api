@@ -74,6 +74,21 @@ describe.skipIf(!supabaseConfigurado)("integração de veículos (Supabase)", ()
     expect(lista.body.some((veiculo: { id: string }) => veiculo.id === criado.body.id)).toBe(true);
   });
 
+  it("busca um veículo pelo id", async () => {
+    const marca = await request(app).post("/marcas").send({ nome: "ZZ-Marca Busca Veículo" });
+    expect(marca.status).toBe(201);
+    marcaIds.push(marca.body.id);
+
+    const criado = await request(app).post("/veiculos").send(novoVeiculo(marca.body.id, "ZZ-Modelo Busca"));
+    expect(criado.status).toBe(201);
+    veiculoIds.push(criado.body.id);
+
+    const resposta = await request(app).get(`/veiculos/${criado.body.id}`);
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.modelo).toBe("ZZ-Modelo Busca");
+    expect(resposta.body.marcas.id).toBe(marca.body.id);
+  });
+
   it("atualiza e exclui um veículo sem vínculos", async () => {
     const marca = await request(app).post("/marcas").send({ nome: "ZZ-Marca Atualização Veículo" });
     expect(marca.status).toBe(201);
