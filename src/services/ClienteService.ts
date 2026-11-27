@@ -18,6 +18,10 @@ function validarDados(dados: any): void {
     throw new ValidationError("O nome do cliente deve ter no maximo 150 caracteres.");
   }
 
+  if (cpf === undefined || cpf === null || cpf === "") {
+    throw new ValidationError("O CPF do cliente e obrigatorio.");
+  }
+
   if (
     !Validacao.isTextoOpcional(email) ||
     !Validacao.isTextoOpcional(telefone) ||
@@ -34,7 +38,7 @@ function validarDados(dados: any): void {
     throw new ValidationError("O telefone deve ter no maximo 20 caracteres.");
   }
 
-  if (cpf && cpf.replace(/\D/g, "").length !== 11) {
+  if (cpf.replace(/\D/g, "").length !== 11) {
     throw new ValidationError("CPF invalido. Informe os 11 numeros.");
   }
 
@@ -104,18 +108,16 @@ async function atualizar(id: string, dados: any) {
   const existente = await ClienteRepository.findById(id);
   if (!existente) throw new NotFoundError("Cliente nao encontrado.");
 
-  const cpfNovo = dados.cpf === undefined ? existente.getCpf() : dados.cpf;
-  const cpfMudou = dados.cpf !== undefined &&
-    (dados.cpf === null || !existente.getCpf() ||
-      cpfNormalizado(dados.cpf) !== cpfNormalizado(existente.getCpf()!));
+  const cpfMudou = !existente.getCpf() ||
+    cpfNormalizado(dados.cpf) !== cpfNormalizado(existente.getCpf()!);
 
-  if (cpfMudou) await validarCpfDisponivel(cpfNovo, id);
+  if (cpfMudou) await validarCpfDisponivel(dados.cpf, id);
 
   const cliente = new Cliente(
     dados.nome.trim(),
     dados.email === undefined ? existente.getEmail() : dados.email,
     dados.telefone === undefined ? existente.getTelefone() : dados.telefone,
-    cpfNovo,
+    dados.cpf,
     dados.ativo === undefined ? existente.isAtivo() : dados.ativo,
   );
 

@@ -75,10 +75,12 @@ describe("ClienteService", () => {
     it.each([
       [{ nome: "   " }, "O nome do cliente e obrigatorio."],
       [{ nome: "x".repeat(151) }, "O nome do cliente deve ter no maximo 150 caracteres."],
-      [{ nome: "ZZ-Cliente", email: "email-invalido" }, "Email invalido."],
-      [{ nome: "ZZ-Cliente", telefone: "1".repeat(21) }, "O telefone deve ter no maximo 20 caracteres."],
+      [{ nome: "ZZ-Cliente" }, "O CPF do cliente e obrigatorio."],
+      [{ nome: "ZZ-Cliente", cpf: "" }, "O CPF do cliente e obrigatorio."],
+      [{ nome: "ZZ-Cliente", cpf: "12345678901", email: "email-invalido" }, "Email invalido."],
+      [{ nome: "ZZ-Cliente", cpf: "12345678901", telefone: "1".repeat(21) }, "O telefone deve ter no maximo 20 caracteres."],
       [{ nome: "ZZ-Cliente", cpf: "123" }, "CPF invalido. Informe os 11 numeros."],
-      [{ nome: "ZZ-Cliente", ativo: "sim" }, "O campo ativo deve ser true ou false."],
+      [{ nome: "ZZ-Cliente", cpf: "12345678901", ativo: "sim" }, "O campo ativo deve ser true ou false."],
       [undefined, "O nome do cliente e obrigatorio."],
     ])("rejeita dados inválidos antes de acessar o banco", async (dados, message) => {
       await expect(ClienteService.criar(dados)).rejects.toMatchObject({ statusCode: 400, message });
@@ -123,7 +125,7 @@ describe("ClienteService", () => {
       vi.mocked(ClienteRepository.findById).mockResolvedValue(existente);
       vi.mocked(ClienteRepository.update).mockResolvedValue(clienteExemplo({ nome: "ZZ-Cliente Alterado" }));
 
-      await ClienteService.atualizar(ID, { nome: "ZZ-Cliente Alterado" });
+      await ClienteService.atualizar(ID, { nome: "ZZ-Cliente Alterado", cpf: "12345678901" });
 
       expect(ClienteRepository.update).toHaveBeenCalledWith(ID, expect.objectContaining({
         nome: "ZZ-Cliente Alterado",

@@ -19,6 +19,8 @@ const marcaIds: string[] = [];
 const clienteValido = (nome: string) => ({
   nome,
   email: `${nome.toLowerCase().replace(/[^a-z0-9]/g, "")}@example.test`,
+  // o cpf nao pode repetir, entao cada cliente usa um numero diferente
+  cpf: String(Date.now()).slice(-11),
   ativo: true,
 });
 

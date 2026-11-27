@@ -13,7 +13,7 @@ Esse projeto foi desenvolvido como APS da disciplina de Back-End Development, us
 
 ## Tecnologias utilizadas
 
-- Node.js
+- Node.js (versao 22.9 ou superior)
 - TypeScript
 - Express
 - Supabase (PostgreSQL)
@@ -83,7 +83,7 @@ Os relacionamentos sao feitos por chave estrangeira (`marca_id`, `veiculo_id` e 
 - **Excluir venda:** se a venda ainda valia (nao estava cancelada), o veiculo volta a ficar disponivel.
 - **Venda registrada:** `veiculo_id` e `cliente_id` nao podem ser alterados. O `status` aceita `pendente`, `concluida` ou `cancelada`, e o `preco_venda` precisa ser maior que zero.
 - **Marca:** nao pode haver duas marcas com o mesmo nome (sem diferenciar maiusculas de minusculas). Retorna `409`.
-- **Cliente:** o nome e obrigatorio (ate 150 caracteres). Email, telefone, CPF e ativo sao opcionais; email deve ter formato valido, telefone aceita ate 20 caracteres e CPF deve conter 11 numeros, com ou sem pontuacao. Quando preenchido, o CPF nao pode estar cadastrado em outro cliente; a API retorna `409`.
+- **Cliente:** o nome (ate 150 caracteres) e o CPF sao obrigatorios. O CPF deve conter 11 numeros, com ou sem pontuacao, e nao pode estar cadastrado em outro cliente; a API retorna `409`. Email, telefone e ativo sao opcionais; email deve ter formato valido e telefone aceita ate 20 caracteres.
 - **Veiculo:** `marca_id`, `modelo`, `ano` e `preco` sao obrigatorios. A marca precisa existir (`400`), o modelo aceita ate 150 caracteres, o ano deve estar entre 1950 e o ano atual mais um, e o preco deve ser maior que zero. `km`, quando informado, deve ser um inteiro maior ou igual a zero.
 - **Exclusoes protegidas:** nao e possivel excluir uma marca que tem veiculos, nem um veiculo ou cliente que tem vendas. Retorna `409`.
 - **Relacionamentos:** um veiculo precisa de uma marca existente e uma venda precisa de um veiculo e um cliente existentes. Caso contrario retorna `400`.
@@ -262,7 +262,7 @@ No `POST` e no `PUT` de veiculos, envie `marca_id`, `modelo`, `ano` e `preco`; `
 | PUT | /clientes/:id | Atualiza um cliente |
 | DELETE | /clientes/:id | Remove um cliente |
 
-No `POST` e no `PUT`, `nome` e obrigatorio. `email`, `telefone`, `cpf` e `ativo` podem ser omitidos. O CPF pode ser enviado com ou sem pontuacao.
+No `POST` e no `PUT`, `nome` e `cpf` sao obrigatorios. `email`, `telefone` e `ativo` podem ser omitidos. O CPF pode ser enviado com ou sem pontuacao.
 
 ### Vendas
 
@@ -282,7 +282,7 @@ No `POST` e no `PUT`, `nome` e obrigatorio. `email`, `telefone`, `cpf` e `ativo`
 | 201 | Registro criado com sucesso |
 | 400 | Dados invalidos, id em formato invalido ou registro relacionado inexistente (ex: `marca_id` que nao existe, veiculo que ja foi vendido) |
 | 404 | Registro ou rota nao encontrado |
-| 409 | Conflito: exclusao bloqueada porque existem registros relacionados, ou nome de marca que ja existe |
+| 409 | Conflito: exclusao bloqueada porque existem registros relacionados, ou nome de marca ou CPF de cliente que ja existe |
 | 500 | Erro interno do servidor |
 
 Todas as respostas de erro seguem o formato:

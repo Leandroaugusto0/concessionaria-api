@@ -35,7 +35,11 @@ async function prepararVenda() {
     { marca_id: marca.id, modelo: "ZZ-Modelo Venda", ano: 2024, preco: 50000 },
     veiculoIds
   );
-  const cliente = await criar("/clientes", { nome: "ZZ-Cliente Venda" }, clienteIds);
+  const cliente = await criar(
+    "/clientes",
+    { nome: "ZZ-Cliente Venda", cpf: String(Date.now()).slice(-11) },
+    clienteIds
+  );
 
   return { ...dadosVenda, veiculo_id: veiculo.id, cliente_id: cliente.id };
 }

@@ -42,6 +42,7 @@ const router = Router();
  *       type: object
  *       required:
  *         - nome
+ *         - cpf
  *       properties:
  *         nome:
  *           type: string
@@ -59,7 +60,6 @@ const router = Router();
  *           example: "11999990000"
  *         cpf:
  *           type: string
- *           nullable: true
  *           description: Aceita CPF com ou sem pontuação, contendo 11 números.
  *           example: "12345678901"
  *         ativo:
@@ -167,7 +167,7 @@ router.post("/", ClienteController.create);
  *   put:
  *     tags: [Clientes]
  *     summary: Atualiza um cliente
- *     description: O campo nome é obrigatório; os demais campos são opcionais.
+ *     description: Os campos nome e cpf são obrigatórios; os demais são opcionais.
  *     parameters:
  *       - in: path
  *         name: id

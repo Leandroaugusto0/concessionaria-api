@@ -137,7 +137,10 @@ describe.skipIf(!supabaseConfigurado)("integração de veículos (Supabase)", ()
     expect(veiculo.status).toBe(201);
     veiculoIds.push(veiculo.body.id);
 
-    const cliente = await request(app).post("/clientes").send({ nome: "ZZ-Cliente para vínculo veículo" });
+    const cliente = await request(app).post("/clientes").send({
+      nome: "ZZ-Cliente para vínculo veículo",
+      cpf: String(Date.now()).slice(-11),
+    });
     expect(cliente.status).toBe(201);
     clienteIds.push(cliente.body.id);
 

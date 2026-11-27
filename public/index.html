@@ -115,6 +115,10 @@
                     <label for="cliente-telefone">Telefone <span class="opcional">(opcional)</span></label>
                     <input id="cliente-telefone" type="tel" name="telefone" maxlength="20" autocomplete="off">
                 </div>
+                <div class="campo">
+                    <label for="cliente-cpf">CPF</label>
+                    <input id="cliente-cpf" type="text" name="cpf" inputmode="numeric" maxlength="14" autocomplete="off">
+                </div>
                 <button type="submit" class="btn">Adicionar cliente</button>
             </form>
 
@@ -123,9 +127,9 @@
                 <table>
                     <caption class="sr-only">Clientes cadastrados</caption>
                     <thead>
-                        <tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Telefone</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
+                        <tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Telefone</th><th scope="col">CPF</th><th scope="col"><span class="sr-only">Ações</span></th></tr>
                     </thead>
-                    <tbody id="lista-clientes"><tr class="linha-vazia"><td colspan="4">Carregando…</td></tr></tbody>
+                    <tbody id="lista-clientes"><tr class="linha-vazia"><td colspan="5">Carregando…</td></tr></tbody>
                 </table>
             </div>
         </section>

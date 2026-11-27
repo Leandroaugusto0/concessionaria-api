@@ -272,8 +272,8 @@ const ENTIDADES = {
         plural: "os clientes",
         artigo: "o cliente",
         removida: "Cliente removido.",
-        colunas: 3,
-        celulas: (c) => [esc(c.nome), esc(c.email ?? ""), esc(c.telefone ?? "")],
+        colunas: 4,
+        celulas: (c) => [esc(c.nome), esc(c.email ?? ""), esc(c.telefone ?? ""), esc(c.cpf ?? "")],
         rotulo: (c) => c.nome,
         vazio: () => "Nenhum cliente cadastrado ainda.",
     },
@@ -534,17 +534,20 @@ const FORMULARIOS = {
             else if (d.nome.length > 150) erros.nome = "O nome deve ter no máximo 150 caracteres.";
             if (d.email && !EMAIL_REGEX.test(d.email)) erros.email = "E-mail inválido. Exemplo: nome@dominio.com.";
             if (d.telefone && d.telefone.length > 20) erros.telefone = "O telefone deve ter no máximo 20 caracteres.";
+            if (!d.cpf) erros.cpf = "Informe o CPF do cliente.";
+            else if (d.cpf.replace(/\D/g, "").length !== 11) erros.cpf = "O CPF deve ter 11 números.";
             return erros;
         },
-        corpo: (d) => ({ nome: d.nome, email: d.email || undefined, telefone: d.telefone || undefined }),
+        corpo: (d) => ({ nome: d.nome, email: d.email || undefined, telefone: d.telefone || undefined, cpf: d.cpf }),
         sucessoEdicao: "Cliente atualizado.",
         falhaEdicao: "Não foi possível atualizar o cliente",
         preencher(form, c) {
             form.elements.nome.value = c.nome ?? "";
             form.elements.email.value = c.email ?? "";
             form.elements.telefone.value = c.telefone ?? "";
+            form.elements.cpf.value = c.cpf ?? "";
         },
-        corpoEdicao: (d) => ({ nome: d.nome, email: d.email, telefone: d.telefone }),
+        corpoEdicao: (d) => ({ nome: d.nome, email: d.email, telefone: d.telefone, cpf: d.cpf }),
         aposSucesso: () => carregar("clientes"),
         aposFalha: () => carregar("clientes"),
     },
