@@ -233,6 +233,12 @@ const opcoes = { marcas: [], veiculos: [], clientes: [] };
 
 let buscaAplicada = "";
 
+const STATUS_VENDA = { pendente: "Pendente", concluida: "Concluída", cancelada: "Cancelada" };
+
+function seloVenda(status) {
+    return `<span class="selo selo-${esc(status)}">${esc(STATUS_VENDA[status] ?? status)}</span>`;
+}
+
 const ENTIDADES = {
     marcas: {
         rota: "/marcas",
@@ -276,9 +282,12 @@ const ENTIDADES = {
         plural: "as vendas",
         artigo: "a venda",
         removida: "Venda removida.",
-        colunas: 4,
+        colunas: 5,
         numericas: [3],
-        celulas: (v) => [esc(v.veiculos?.modelo ?? "—"), esc(v.clientes?.nome ?? "—"), esc(v.vendedor), esc(moeda(v.preco_venda))],
+        celulas: (v) => [
+            esc(v.veiculos?.modelo ?? "—"), esc(v.clientes?.nome ?? "—"), esc(v.vendedor), esc(moeda(v.preco_venda)),
+            seloVenda(v.status),
+        ],
         rotulo: (v) => `${v.veiculos?.modelo ?? "veículo"} para ${v.clientes?.nome ?? "cliente"}`,
         vazio: () => "Nenhuma venda registrada ainda.",
     },
