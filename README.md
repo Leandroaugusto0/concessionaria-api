@@ -400,7 +400,7 @@ Organizacao dos arquivos:
 | Pasta | O que testa |
 |---|---|
 | `tests/unit/` | Services, controllers, repositories e erros proprios. A camada de baixo e trocada por uma falsa (`vi.mock`), entao nao usam o banco |
-| `tests/integration/` | As rotas de verdade (POST, GET, PUT, DELETE e os erros 400, 404 e 409) usando o banco do Supabase |
+| `tests/integration/` | As rotas de verdade das quatro entidades (cadastrar, listar, buscar por id, atualizar, excluir e os erros 400, 404 e 409) usando o banco do Supabase |
 | `tests/app.test.ts` | Comportamentos do app: rota inexistente, JSON invalido e documentacao swagger |
 
 Como executar:
@@ -418,7 +418,7 @@ Cobertura atual:
 
 | Execucao | Linhas | Instrucoes | Funcoes | Branches |
 |---|---|---|---|---|
-| Todos os testes (com banco) | 90% | 90% | 92% | 92% |
+| Todos os testes (com banco) | 97% | 97% | 99% | 94% |
 | So os unitarios (sem `.env`) | 84% | 83% | 80% | 86% |
 
 Configuracao necessaria: os testes de integracao precisam do `.env` com `SUPABASE_URL` e `SUPABASE_SECRET_KEY` (banco com as tabelas de `database/schema.sql`). Sem o `.env` esses testes sao pulados e so os unitarios rodam.
