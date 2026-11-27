@@ -12,6 +12,8 @@ export default defineConfig({
         // os testes de integracao usam o mesmo banco, entao rodam um de cada vez
         fileParallelism: false,
         testTimeout: 15000,
+        // a limpeza do banco no final de cada arquivo faz varias requisicoes
+        hookTimeout: 60000,
         coverage: {
             provider: "v8",
             include: ["src/**/*.ts"],
